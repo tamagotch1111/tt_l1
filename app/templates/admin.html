@@ -1,6 +1,19 @@
 {% extends "base.html" %}
 {% block content %}
-<h1 class="text-2xl font-extrabold tracking-tight mb-6 border-l-4 border-corp-red pl-3">Панель администратора</h1>
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+    <h1 class="text-2xl font-extrabold tracking-tight border-l-4 border-corp-red pl-3">Панель управления</h1>
+    
+    {% if user.role in ['admin', 'manager'] %}
+    <div class="inline-flex p-1 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-xs font-bold">
+        <a href="/admin?tab=schedule" class="px-4 py-2 rounded-xl transition {% if tab == 'schedule' %}bg-corp-red text-white shadow-md{% else %}text-gray-500 hover:text-gray-900 dark:hover:text-white{% endif %}">
+            📅 График и смены
+        </a>
+        <a href="/admin?tab=users" class="px-4 py-2 rounded-xl transition {% if tab == 'users' %}bg-corp-red text-white shadow-md{% else %}text-gray-500 hover:text-gray-900 dark:hover:text-white{% endif %}">
+            👥 Пользователи и роли
+        </a>
+    </div>
+    {% endif %}
+</div>
 
 {% if msg %}
 <div class="ios-glass p-4 rounded-2xl mb-6 {% if success %}text-emerald-700 dark:text-emerald-300 border-emerald-500/40{% else %}text-rose-700 dark:text-rose-300 border-rose-500/40{% endif %} font-medium text-sm">
@@ -8,6 +21,7 @@
 </div>
 {% endif %}
 
+{% if tab == 'schedule' %}
 <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
     <!-- ЗАГРУЗКА И ОЧИСТКА EXCEL -->
     <div class="ios-glass p-6 rounded-[28px] flex flex-col justify-between">
@@ -23,7 +37,6 @@
             </form>
         </div>
 
-        <!-- КНОПКА ОЧИСТКИ ТЕКУЩЕГО ГРАФИКА -->
         <div class="pt-5 mt-5 border-t border-black/5 dark:border-white/10">
             <form method="post" action="/admin/clear-schedule" onsubmit="return confirm('Вы уверены, что хотите полностью очистить график смен и дежурств?')">
                 <button type="submit" class="w-full bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/25 font-bold text-xs px-4 py-2.5 rounded-xl transition active:scale-95 flex items-center justify-center gap-2">
@@ -38,7 +51,6 @@
     <!-- УПРАВЛЕНИЕ РУКОВОДИТЕЛЯМИ -->
     <div class="ios-glass p-6 rounded-[28px] relative z-30">
         <h2 class="text-base font-bold mb-4 flex items-center gap-2">👔 Руководители</h2>
-        
         <form method="post" action="/admin/add-manager" class="space-y-3 mb-4">
             <div class="relative">
                 <input type="hidden" name="employee_name" id="valNewMgr" value="" required>
@@ -75,14 +87,13 @@
     <div class="ios-glass p-6 rounded-[28px] relative z-20">
         <h2 class="text-base font-bold mb-4 flex items-center gap-2">✍️ Ручное назначение</h2>
         <form method="post" action="/admin/add-entry" class="space-y-3">
-            
             <div>
                 <label class="block text-xs font-semibold mb-1 opacity-75">Дата</label>
                 <input type="hidden" name="date_val" id="valDate" value="2026-09-29" required>
                 <div class="grid grid-cols-3 gap-1.5">
                     <div class="relative">
                         <button type="button" onclick="toggleAdminDropdown('dayDropdown')" 
-                                class="w-full bg-white/70 dark:bg-[#1c1c22]/90 hover:bg-white dark:hover:bg-[#25252b] border border-black/10 dark:border-white/15 rounded-xl px-2.5 py-2 text-xs text-gray-800 dark:text-gray-100 flex items-center justify-between transition shadow-sm cursor-pointer select-none">
+                                class="w-full bg-white/70 dark:bg-[#1c1c22]/90 border border-black/10 dark:border-white/15 rounded-xl px-2.5 py-2 text-xs text-gray-800 dark:text-gray-100 flex items-center justify-between transition">
                             <span id="labelDay" class="font-medium">29</span>
                             <span class="text-gray-400 text-[10px]">▼</span>
                         </button>
@@ -95,7 +106,7 @@
 
                     <div class="relative">
                         <button type="button" onclick="toggleAdminDropdown('monthDropdown')" 
-                                class="w-full bg-white/70 dark:bg-[#1c1c22]/90 hover:bg-white dark:hover:bg-[#25252b] border border-black/10 dark:border-white/15 rounded-xl px-2.5 py-2 text-xs text-gray-800 dark:text-gray-100 flex items-center justify-between transition shadow-sm cursor-pointer select-none">
+                                class="w-full bg-white/70 dark:bg-[#1c1c22]/90 border border-black/10 dark:border-white/15 rounded-xl px-2.5 py-2 text-xs text-gray-800 dark:text-gray-100 flex items-center justify-between transition">
                             <span id="labelMonth" class="font-medium">Сентябрь</span>
                             <span class="text-gray-400 text-[10px]">▼</span>
                         </button>
@@ -109,7 +120,7 @@
 
                     <div class="relative">
                         <button type="button" onclick="toggleAdminDropdown('yearDropdown')" 
-                                class="w-full bg-white/70 dark:bg-[#1c1c22]/90 hover:bg-white dark:hover:bg-[#25252b] border border-black/10 dark:border-white/15 rounded-xl px-2.5 py-2 text-xs text-gray-800 dark:text-gray-100 flex items-center justify-between transition shadow-sm cursor-pointer select-none">
+                                class="w-full bg-white/70 dark:bg-[#1c1c22]/90 border border-black/10 dark:border-white/15 rounded-xl px-2.5 py-2 text-xs text-gray-800 dark:text-gray-100 flex items-center justify-between transition">
                             <span id="labelYear" class="font-medium">2026</span>
                             <span class="text-gray-400 text-[10px]">▼</span>
                         </button>
@@ -125,7 +136,7 @@
                 <label class="block text-xs font-semibold mb-1 opacity-75">Сотрудник</label>
                 <input type="hidden" name="employee_name" id="valEmp" value="" required>
                 <button type="button" onclick="toggleAdminDropdown('empDropdown')" 
-                        class="w-full bg-white/70 dark:bg-[#1c1c22]/90 hover:bg-white dark:hover:bg-[#25252b] border border-black/10 dark:border-white/15 rounded-xl px-3.5 py-2 text-xs text-gray-800 dark:text-gray-100 flex items-center justify-between transition shadow-sm cursor-pointer select-none">
+                        class="w-full bg-white/70 dark:bg-[#1c1c22]/90 border border-black/10 dark:border-white/15 rounded-xl px-3.5 py-2 text-xs text-gray-800 dark:text-gray-100 flex items-center justify-between transition">
                     <span id="labelEmp" class="font-medium text-gray-400">Выберите сотрудника...</span>
                     <span class="text-gray-400 text-[10px]">▼</span>
                 </button>
@@ -141,7 +152,7 @@
                     <label class="block text-xs font-semibold mb-1 opacity-75">Смена</label>
                     <input type="hidden" name="shift_type" id="valShift" value="none">
                     <button type="button" onclick="toggleAdminDropdown('shiftDropdown')" 
-                            class="w-full bg-white/70 dark:bg-[#1c1c22]/90 hover:bg-white dark:hover:bg-[#25252b] border border-black/10 dark:border-white/15 rounded-xl px-3 py-2 text-xs text-gray-800 dark:text-gray-100 flex items-center justify-between transition shadow-sm cursor-pointer select-none">
+                            class="w-full bg-white/70 dark:bg-[#1c1c22]/90 border border-black/10 dark:border-white/15 rounded-xl px-3 py-2 text-xs text-gray-800 dark:text-gray-100 flex items-center justify-between transition">
                         <span id="labelShift" class="font-medium">Без смены</span>
                         <span class="text-gray-400 text-[10px]">▼</span>
                     </button>
@@ -160,7 +171,7 @@
                     <label class="block text-xs font-semibold mb-1 opacity-75">Дежурство</label>
                     <input type="hidden" name="duty_system" id="valDuty" value="none">
                     <button type="button" onclick="toggleAdminDropdown('dutyDropdown')" 
-                            class="w-full bg-white/70 dark:bg-[#1c1c22]/90 hover:bg-white dark:hover:bg-[#25252b] border border-black/10 dark:border-white/15 rounded-xl px-3 py-2 text-xs text-gray-800 dark:text-gray-100 flex items-center justify-between transition shadow-sm cursor-pointer select-none">
+                            class="w-full bg-white/70 dark:bg-[#1c1c22]/90 border border-black/10 dark:border-white/15 rounded-xl px-3 py-2 text-xs text-gray-800 dark:text-gray-100 flex items-center justify-between transition">
                         <span id="labelDuty" class="font-medium">Нет</span>
                         <span class="text-gray-400 text-[10px]">▼</span>
                     </button>
@@ -174,10 +185,10 @@
             </div>
 
             <div class="relative">
-                <label class="block text-xs font-semibold mb-1 opacity-75">Статус отсутствия</label>
+                <label class="block text-xs font-semibold mb-1 opacity-75">Статус</label>
                 <input type="hidden" name="status" id="valStatus" value="none">
                 <button type="button" onclick="toggleAdminDropdown('statusDropdown')" 
-                        class="w-full bg-white/70 dark:bg-[#1c1c22]/90 hover:bg-white dark:hover:bg-[#25252b] border border-black/10 dark:border-white/15 rounded-xl px-3.5 py-2 text-xs text-gray-800 dark:text-gray-100 flex items-center justify-between transition shadow-sm cursor-pointer select-none">
+                        class="w-full bg-white/70 dark:bg-[#1c1c22]/90 border border-black/10 dark:border-white/15 rounded-xl px-3.5 py-2 text-xs text-gray-800 dark:text-gray-100 flex items-center justify-between transition">
                     <span id="labelStatus" class="font-medium">Обычный рабочий день</span>
                     <span class="text-gray-400 text-[10px]">▼</span>
                 </button>
@@ -195,53 +206,290 @@
     </div>
 </div>
 
+{% elif tab == 'users' and user.role in ['admin', 'manager'] %}
+<!-- ВКЛАДКА 2: ТАБЛИЦА ПОЛЬЗОВАТЕЛЕЙ НА ВСЮ ШИРИНУ БЕЗ ОБРЕЗАНИЙ -->
+<div class="ios-glass p-6 sm:p-7 rounded-[28px] w-full min-h-[380px] pb-32">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div>
+            <h2 class="text-lg font-bold flex items-center gap-2">
+                <span>👥</span>
+                <span>Зарегистрированные пользователи</span>
+            </h2>
+            <p class="text-xs text-gray-400 mt-0.5">Управление аккаунтами, статусами блокировки и ролями доступа</p>
+        </div>
+        
+        <button type="button" onclick="openCreateUserModal()" 
+                class="px-4 py-2.5 rounded-2xl bg-corp-red hover:bg-corp-dark text-white font-bold text-xs shadow-md shadow-corp-red/25 transition active:scale-95 flex items-center gap-2 cursor-pointer self-start sm:self-auto">
+            <span class="text-sm font-extrabold leading-none">+</span>
+            <span>Добавить пользователя</span>
+        </button>
+    </div>
+    
+    <!-- ТАБЛИЦА: СВОБОДНЫЙ OVERFLOW, НИКАКИХ СКРОЛЛБАРОВ И ОБРЕЗАНИЙ -->
+    <div class="overflow-visible">
+        <table class="w-full text-left text-xs">
+            <thead>
+                <tr class="border-b border-black/5 dark:border-white/10 text-gray-400 uppercase tracking-wider text-[11px]">
+                    <th class="pb-3 px-3">Сотрудник / Логин</th>
+                    <th class="pb-3 px-3">Статус</th>
+                    <th class="pb-3 px-3">Текущая роль</th>
+                    <th class="pb-3 px-3 text-right">Действия</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-black/5 dark:divide-white/5">
+                {% for u in users_list %}
+                <tr class="hover:bg-black/5 dark:hover:bg-white/5 transition {% if not u.is_active %}opacity-70 bg-rose-500/5{% endif %}">
+                    
+                    <!-- 1. Сотрудник / Логин -->
+                    <td class="py-4 px-3">
+                        <div class="font-bold text-gray-900 dark:text-white leading-tight text-[13px]">{{ u.full_name }}</div>
+                        <div class="text-[11px] text-gray-400 font-mono mt-0.5">@{{ u.username }}</div>
+                    </td>
+
+                    <!-- 2. Статус (Активен / Заблокирован) -->
+                    <td class="py-4 px-3 whitespace-nowrap">
+                        {% if u.is_active %}
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                            Активен
+                        </span>
+                        {% else %}
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-semibold bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30">
+                            <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
+                            Заблокирован
+                        </span>
+                        {% endif %}
+                    </td>
+
+                    <!-- 3. Кастомный стеклянный дропдаун роли -->
+                    <td class="py-4 px-3 whitespace-nowrap">
+                        <div class="relative inline-block">
+                            <form method="post" action="/admin/users/update-role" id="formRole_{{ u.id }}">
+                                <input type="hidden" name="user_id" value="{{ u.id }}">
+                                <input type="hidden" name="new_role" id="valRole_{{ u.id }}" value="{{ u.role }}">
+                                
+                                <button type="button" onclick="toggleAdminDropdown('roleDropdown_{{ u.id }}')" 
+                                        class="px-3 py-1.5 rounded-xl text-xs font-bold border transition cursor-pointer flex items-center gap-2 select-none active:scale-95
+                                        {% if u.role == 'admin' %}bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30 hover:bg-rose-500/25
+                                        {% elif u.role == 'manager' %}bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/30 hover:bg-purple-500/25
+                                        {% else %}bg-slate-500/15 text-slate-700 dark:text-slate-300 border-slate-500/30 hover:bg-slate-500/25{% endif %}">
+                                    <span>
+                                        {% if u.role == 'admin' %}Администратор
+                                        {% elif u.role == 'manager' %}Руководитель
+                                        {% else %}Сотрудник{% endif %}
+                                    </span>
+                                    <span class="text-[9px] opacity-60">▼</span>
+                                </button>
+                                
+                                <div id="roleDropdown_{{ u.id }}" class="hidden absolute left-0 mt-2 w-48 ios-dropdown-menu rounded-2xl p-1.5 z-50 animate-dropdown shadow-2xl">
+                                    <div onclick="submitChangeUserRole('{{ u.id }}', 'employee')" 
+                                         class="px-3 py-2 text-xs rounded-xl hover:bg-corp-red hover:text-white cursor-pointer transition font-medium flex items-center justify-between {% if u.role == 'employee' %}text-corp-red dark:text-red-400 font-bold{% endif %}">
+                                        <span>Сотрудник</span>
+                                        {% if u.role == 'employee' %}<span class="text-xs">✓</span>{% endif %}
+                                    </div>
+                                    <div onclick="submitChangeUserRole('{{ u.id }}', 'manager')" 
+                                         class="px-3 py-2 text-xs rounded-xl hover:bg-corp-red hover:text-white cursor-pointer transition font-medium flex items-center justify-between {% if u.role == 'manager' %}text-purple-600 dark:text-purple-400 font-bold{% endif %}">
+                                        <span>Руководитель</span>
+                                        {% if u.role == 'manager' %}<span class="text-xs">✓</span>{% endif %}
+                                    </div>
+                                    <div onclick="submitChangeUserRole('{{ u.id }}', 'admin')" 
+                                         class="px-3 py-2 text-xs rounded-xl hover:bg-corp-red hover:text-white cursor-pointer transition font-medium flex items-center justify-between {% if u.role == 'admin' %}text-rose-600 dark:text-rose-400 font-bold{% endif %}">
+                                        <span>Администратор</span>
+                                        {% if u.role == 'admin' %}<span class="text-xs">✓</span>{% endif %}
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </td>
+
+                    <!-- 4. Действия: Сбросить пароль -> Заблокировать/Разблокировать -> Удалить -->
+                    <td class="py-4 px-3 text-right whitespace-nowrap">
+                        <div class="inline-flex items-center gap-2">
+                            
+                            <!-- Сбросить пароль -->
+                            <button type="button" onclick="promptResetPassword('{{ u.id }}', '{{ u.full_name }}')"
+                                    class="px-3 py-1.5 rounded-xl bg-black/5 hover:bg-black/10 dark:bg-white/10 dark:hover:bg-white/15 text-gray-700 dark:text-gray-200 font-medium transition active:scale-95 flex items-center gap-1.5 cursor-pointer">
+                                <span>🔑</span>
+                                <span>Сбросить пароль</span>
+                            </button>
+
+                            {% if u.id != user.id %}
+                            <!-- Заблокировать / Разблокировать -->
+                            <form method="post" action="/admin/users/toggle-block" class="inline">
+                                <input type="hidden" name="user_id" value="{{ u.id }}">
+                                {% if u.is_active %}
+                                <button type="submit" 
+                                        class="px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-700 dark:text-amber-400 border border-amber-500/30 font-medium transition active:scale-95 flex items-center gap-1.5 cursor-pointer">
+                                    <span>🔒</span>
+                                    <span>Заблокировать</span>
+                                </button>
+                                {% else %}
+                                <button type="submit" 
+                                        class="px-3 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 font-medium transition active:scale-95 flex items-center gap-1.5 cursor-pointer">
+                                    <span>🔓</span>
+                                    <span>Разблокировать</span>
+                                </button>
+                                {% endif %}
+                            </form>
+
+                            <!-- Удалить -->
+                            <form method="post" action="/admin/users/delete" onsubmit="return confirm('Вы действительно хотите удалить пользователя {{ u.full_name }}?')" class="inline">
+                                <input type="hidden" name="user_id" value="{{ u.id }}">
+                                <button type="submit" 
+                                        class="px-3 py-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-600 dark:text-rose-400 border border-rose-500/30 font-medium transition active:scale-95 flex items-center gap-1.5 cursor-pointer">
+                                    <span>🗑</span>
+                                    <span>Удалить</span>
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- МОДАЛЬНОЕ ОКНО ДОБАВЛЕНИЯ ПОЛЬЗОВАТЕЛЯ -->
+<div id="createUserModal" class="fixed inset-0 ios-modal-backdrop hidden items-center justify-center p-4 z-50">
+    <div class="ios-glass-card rounded-[32px] max-w-md w-full p-6 sm:p-7 animate-ios shadow-2xl">
+        <div class="flex justify-between items-start mb-5">
+            <div>
+                <p class="text-[11px] font-bold tracking-wider uppercase text-gray-400 mb-0.5">Управление доступом</p>
+                <h3 class="text-xl font-extrabold tracking-tight text-corp-red dark:text-red-400">Новый пользователь</h3>
+            </div>
+            <button type="button" onclick="closeCreateUserModal()" 
+                    class="w-8 h-8 rounded-full bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 flex items-center justify-center text-gray-600 dark:text-gray-300 font-bold text-sm transition active:scale-90">
+                ✕
+            </button>
+        </div>
+
+        <form method="post" action="/admin/users/create" class="space-y-4 text-xs">
+            <div>
+                <label class="block font-semibold mb-1 opacity-75">Логин</label>
+                <input type="text" name="username" required placeholder="ivan_i" 
+                       class="w-full bg-white/70 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-2xl px-4 py-2.5 text-xs outline-none focus:border-corp-red transition">
+            </div>
+
+            <div>
+                <label class="block font-semibold mb-1 opacity-75">ФИО сотрудника</label>
+                <input type="text" name="full_name" required placeholder="Иванов Иван Иванович" 
+                       class="w-full bg-white/70 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-2xl px-4 py-2.5 text-xs outline-none focus:border-corp-red transition">
+            </div>
+
+            <div>
+                <label class="block font-semibold mb-1 opacity-75">Временный пароль</label>
+                <input type="text" name="password" required minlength="4" value="user123" 
+                       class="w-full bg-white/70 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-2xl px-4 py-2.5 text-xs outline-none focus:border-corp-red font-mono transition">
+            </div>
+
+            <div>
+                <label class="block font-semibold mb-1 opacity-75">Назначаемая роль</label>
+                <div class="relative">
+                    <input type="hidden" name="role" id="valNewUserRole" value="employee">
+                    <button type="button" onclick="toggleAdminDropdown('newUserRoleDropdown')" 
+                            class="w-full bg-white/70 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-2xl px-4 py-2.5 text-xs flex items-center justify-between outline-none focus:border-corp-red transition cursor-pointer select-none">
+                        <span id="labelNewUserRole" class="font-medium text-gray-800 dark:text-gray-100">Сотрудник (Только просмотр + Мои смены)</span>
+                        <span class="text-gray-400 text-[10px]">▼</span>
+                    </button>
+                    <div id="newUserRoleDropdown" class="hidden absolute left-0 mt-2 w-full ios-dropdown-menu rounded-2xl p-1.5 z-50 animate-dropdown shadow-xl">
+                        <div onclick="selectNewUserRole('employee', 'Сотрудник (Только просмотр + Мои смены)')" class="px-3 py-2 text-xs rounded-xl hover:bg-corp-red hover:text-white cursor-pointer transition font-medium">Сотрудник (Только просмотр + Мои смены)</div>
+                        <div onclick="selectNewUserRole('manager', 'Руководитель (Управление графиком и пользователями)')" class="px-3 py-2 text-xs rounded-xl hover:bg-corp-red hover:text-white cursor-pointer transition font-medium">Руководитель (Управление графиком и пользователями)</div>
+                        <div onclick="selectNewUserRole('admin', 'Администратор (Полный доступ ко всему)')" class="px-3 py-2 text-xs rounded-xl hover:bg-corp-red hover:text-white cursor-pointer transition font-medium">Администратор (Полный доступ ко всему)</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-2">
+                <button type="submit" class="w-full py-3 rounded-2xl bg-corp-red hover:bg-corp-dark text-white font-bold text-xs shadow-xl shadow-corp-red/25 transition active:scale-95 cursor-pointer">
+                    + Создать аккаунт
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<form id="resetPwdForm" method="post" action="/admin/users/reset-password" class="hidden">
+    <input type="hidden" name="user_id" id="resetUserId">
+    <input type="hidden" name="new_password" id="resetNewPassword">
+</form>
+
+<script>
+    function openCreateUserModal() {
+        const m = document.getElementById('createUserModal');
+        if (m) {
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+        }
+    }
+    function closeCreateUserModal() {
+        const m = document.getElementById('createUserModal');
+        if (m) {
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        }
+    }
+    document.getElementById('createUserModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeCreateUserModal();
+        }
+    });
+
+    function selectNewUserRole(val, label) {
+        document.getElementById('valNewUserRole').value = val;
+        document.getElementById('labelNewUserRole').innerText = label;
+        document.getElementById('newUserRoleDropdown').classList.add('hidden');
+    }
+
+    function submitChangeUserRole(userId, newRole) {
+        document.getElementById('valRole_' + userId).value = newRole;
+        document.getElementById('formRole_' + userId).submit();
+    }
+
+    function promptResetPassword(userId, userName) {
+        const newPwd = prompt(`Введите новый пароль для сотрудника ${userName}:`, '123456');
+        if (newPwd && newPwd.trim().length >= 4) {
+            document.getElementById('resetUserId').value = userId;
+            document.getElementById('resetNewPassword').value = newPwd.trim();
+            document.getElementById('resetPwdForm').submit();
+        } else if (newPwd !== null) {
+            alert('Пароль должен содержать минимум 4 символа!');
+        }
+    }
+</script>
+{% endif %}
+
 <style>
     .ios-inner-scroll {
         overflow-y: auto;
         scrollbar-width: thin;
         scrollbar-color: rgba(0, 0, 0, 0.22) transparent;
-        overscroll-behavior: contain;
     }
-    .dark .ios-inner-scroll {
-        scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
-    }
-    .ios-inner-scroll::-webkit-scrollbar {
-        width: 5px;
-    }
-    .ios-inner-scroll::-webkit-scrollbar-track {
-        background: transparent;
-        margin: 6px 0;
-    }
-    .ios-inner-scroll::-webkit-scrollbar-thumb {
-        background: rgba(0, 0, 0, 0.22);
-        border-radius: 9999px;
-    }
-    .dark .ios-inner-scroll::-webkit-scrollbar-thumb {
-        background: rgba(255, 255, 255, 0.22);
-    }
+    .dark .ios-inner-scroll { scrollbar-color: rgba(255, 255, 255, 0.22) transparent; }
+    .ios-inner-scroll::-webkit-scrollbar { width: 5px; }
+    .ios-inner-scroll::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.22); border-radius: 9999px; }
+    .dark .ios-inner-scroll::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.22); }
 
     .ios-dropdown-menu {
-        background: rgba(255, 255, 255, 0.88);
+        background: rgba(255, 255, 255, 0.90);
         backdrop-filter: blur(35px) saturate(190%);
         -webkit-backdrop-filter: blur(35px) saturate(190%);
         border: 1px solid rgba(255, 255, 255, 0.6);
         box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.25);
     }
     .dark .ios-dropdown-menu {
-        background: rgba(32, 32, 38, 0.92);
+        background: rgba(32, 32, 38, 0.95);
         backdrop-filter: blur(35px) saturate(190%);
         -webkit-backdrop-filter: blur(35px) saturate(190%);
         border: 1px solid rgba(255, 255, 255, 0.12);
         box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.65);
     }
-
     @keyframes dropdownPop {
         0% { opacity: 0; transform: scale(0.95) translateY(-6px); }
         100% { opacity: 1; transform: scale(1) translateY(0); }
     }
-    .animate-dropdown {
-        animation: dropdownPop 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
+    .animate-dropdown { animation: dropdownPop 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 </style>
 
 <script>
@@ -252,15 +500,35 @@
     function toggleAdminDropdown(id) {
         const menu = document.getElementById(id);
         const allMenus = document.querySelectorAll('.ios-dropdown-menu');
-        allMenus.forEach(m => {
-            if (m.id !== id) m.classList.add('hidden');
+        
+        allMenus.forEach(m => { 
+            if (m.id !== id) {
+                m.classList.add('hidden');
+                const parentRow = m.closest('tr');
+                if (parentRow) parentRow.classList.remove('relative', 'z-30');
+            }
         });
-        menu.classList.toggle('hidden');
+        
+        if (menu) {
+            menu.classList.toggle('hidden');
+            const parentRow = menu.closest('tr');
+            if (parentRow) {
+                if (!menu.classList.contains('hidden')) {
+                    parentRow.classList.add('relative', 'z-30');
+                } else {
+                    parentRow.classList.remove('relative', 'z-30');
+                }
+            }
+        }
     }
 
     window.addEventListener('click', function(e) {
         if (!e.target.closest('.relative')) {
-            document.querySelectorAll('.ios-dropdown-menu').forEach(m => m.classList.add('hidden'));
+            document.querySelectorAll('.ios-dropdown-menu').forEach(m => {
+                m.classList.add('hidden');
+                const parentRow = m.closest('tr');
+                if (parentRow) parentRow.classList.remove('relative', 'z-30');
+            });
         }
     });
 
@@ -268,7 +536,6 @@
         if (part === 'day') { selectedDay = val; document.getElementById('labelDay').innerText = label; }
         if (part === 'month') { selectedMonth = val; document.getElementById('labelMonth').innerText = label; }
         if (part === 'year') { selectedYear = val; document.getElementById('labelYear').innerText = label; }
-        
         document.getElementById(part + 'Dropdown').classList.add('hidden');
         document.getElementById('valDate').value = `${selectedYear}-${selectedMonth}-${selectedDay}`;
     }

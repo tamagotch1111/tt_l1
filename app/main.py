@@ -18,10 +18,17 @@ templates = Jinja2Templates(directory="app/templates")
 def startup():
     init_db()
     db = SessionLocal()
-    if not db.query(User).filter(User.username == "admin").first():
-        db.add(User(username="admin", password_hash=hash_password("admin123"), full_name="Администратор", role="admin"))
-    if not db.query(User).filter(User.username == "user").first():
-        db.add(User(username="user", password_hash=hash_password("user123"), full_name="Сотрудник", role="user"))
+    admin_user = db.query(User).filter(User.username == "admin").first()
+    if not admin_user:
+        db.add(User(username="admin", password_hash=hash_password("admin123"), full_name="Главный Администратор", role="admin", is_active=True))
+    else:
+        admin_user.role = "admin"
+        admin_user.is_active = True
+    
+    user_test = db.query(User).filter(User.username == "user").first()
+    if not user_test:
+        db.add(User(username="user", password_hash=hash_password("user123"), full_name="Красавин Артем", role="employee", is_active=True))
+    
     db.commit()
     db.close()
 
@@ -32,10 +39,13 @@ def login_page(request: Request):
 @app.post("/login")
 def login_submit(response: Response, request: Request, username: str = Form(...), password: str = Form(...)):
     db = SessionLocal()
-    user = db.query(User).filter(User.username == username).first()
+    user = db.query(User).filter(User.username == username.strip()).first()
     db.close()
     if not user or user.password_hash != hash_password(password):
         return templates.TemplateResponse(request=request, name="login.html", context={"error": "Неверный логин или пароль"})
+    if not getattr(user, "is_active", True):
+        return templates.TemplateResponse(request=request, name="login.html", context={"error": "Учетная запись заблокирована администратором"})
+    
     res = RedirectResponse(url="/", status_code=303)
     res.set_cookie("user_session", user.username, httponly=True)
     return res
@@ -45,6 +55,22 @@ def logout():
     res = RedirectResponse(url="/login")
     res.delete_cookie("user_session")
     return res
+
+@app.post("/api/change-password")
+def change_password(request: Request, old_password: str = Form(...), new_password: str = Form(...), user = Depends(get_current_user)):
+    if not user:
+        return JSONResponse({"success": False, "error": "Не авторизован"}, status_code=401)
+    if user.password_hash != hash_password(old_password):
+        return JSONResponse({"success": False, "error": "Текущий пароль введен неверно"})
+    if len(new_password) < 4:
+        return JSONResponse({"success": False, "error": "Новый пароль слишком короткий (минимум 4 символа)"})
+    
+    db = SessionLocal()
+    db_user = db.query(User).filter(User.id == user.id).first()
+    db_user.password_hash = hash_password(new_password)
+    db.commit()
+    db.close()
+    return JSONResponse({"success": True})
 
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request, user = Depends(get_current_user)):
@@ -84,19 +110,15 @@ def index(request: Request, user = Depends(get_current_user)):
     all_employees = sorted(list(set([row[0] for row in all_emps_db if row[0]])))
     manager_names = [m.employee_name for m in managers_db]
 
-    # Если база смен очищена (total_entries_count == 0) — руководители не выводят вымышленные смены
     managers_status = []
     if total_entries_count > 0 and entries:
         for m_name in manager_names:
             m_surname = m_name.strip().split()[0].lower() if m_name.strip() else ""
             m_entry = next((e for e in entries if e.employee_name and m_surname == e.employee_name.strip().split()[0].lower()), None)
             if m_entry:
-                if m_entry.is_vacation:
-                    status_text = "🏖 В отпуске"
-                elif m_entry.is_sick:
-                    status_text = "💊 На больничном"
-                else:
-                    status_text = "09:00–18:00"
+                if m_entry.is_vacation: status_text = "🏖 В отпуске"
+                elif m_entry.is_sick: status_text = "💊 На больничном"
+                else: status_text = "09:00–18:00"
             else:
                 status_text = "Выходной"
             managers_status.append({"name": m_name, "status": status_text})
@@ -124,29 +146,216 @@ def index(request: Request, user = Depends(get_current_user)):
     )
 
 @app.get("/admin", response_class=HTMLResponse)
-def admin_page(request: Request, user = Depends(get_current_user)):
-    if not user or user.role != "admin":
+def admin_page(request: Request, tab: str = "schedule", user = Depends(get_current_user)):
+    if not user or user.role not in ["admin", "manager"]:
         return RedirectResponse(url="/")
     db = SessionLocal()
     all_emps_db = db.query(ScheduleEntry.employee_name).distinct().all()
     managers_db = db.query(Manager).all()
+    users_list = db.query(User).all()
     db.close()
+
     all_employees = sorted(list(set([row[0] for row in all_emps_db if row[0]])))
     managers_list = [m.employee_name for m in managers_db]
+
     return templates.TemplateResponse(
         request=request, 
         name="admin.html", 
         context={
             "user": user, 
             "msg": None, 
+            "tab": tab,
             "all_employees": all_employees,
-            "managers_list": managers_list
+            "managers_list": managers_list,
+            "users_list": users_list
+        }
+    )
+
+@app.post("/admin/users/create")
+def create_user(
+    request: Request,
+    username: str = Form(...),
+    password: str = Form(...),
+    full_name: str = Form(...),
+    role: str = Form(...),
+    user = Depends(get_current_user)
+):
+    if not user or user.role not in ["admin", "manager"]:
+        return RedirectResponse(url="/", status_code=303)
+    db = SessionLocal()
+    existing = db.query(User).filter(User.username == username.strip()).first()
+    if existing:
+        msg = f"Пользователь с логином {username} уже существует."
+        success = False
+    else:
+        new_u = User(
+            username=username.strip(),
+            password_hash=hash_password(password),
+            full_name=full_name.strip(),
+            role=role,
+            is_active=True
+        )
+        db.add(new_u)
+        db.commit()
+        msg = f"Пользователь {full_name} успешно создан."
+        success = True
+
+    all_emps_db = db.query(ScheduleEntry.employee_name).distinct().all()
+    managers_db = db.query(Manager).all()
+    users_list = db.query(User).all()
+    db.close()
+
+    return templates.TemplateResponse(
+        request=request, name="admin.html", 
+        context={
+            "user": user, "msg": msg, "success": success, "tab": "users",
+            "all_employees": sorted(list(set([r[0] for r in all_emps_db if r[0]]))),
+            "managers_list": [m.employee_name for m in managers_db],
+            "users_list": users_list
+        }
+    )
+
+@app.post("/admin/users/toggle-block")
+def toggle_user_block(request: Request, user_id: int = Form(...), user = Depends(get_current_user)):
+    if not user or user.role not in ["admin", "manager"]:
+        return RedirectResponse(url="/", status_code=303)
+    if user.id == user_id:
+        msg = "Нельзя заблокировать свою собственную учетную запись."
+        success = False
+    else:
+        db = SessionLocal()
+        target_user = db.query(User).filter(User.id == user_id).first()
+        if target_user:
+            current_active = getattr(target_user, "is_active", True)
+            target_user.is_active = not current_active
+            db.commit()
+            status_str = "разблокирован" if target_user.is_active else "заблокирован"
+            msg = f"Пользователь {target_user.full_name} успешно {status_str}."
+            success = True
+        else:
+            msg = "Пользователь не найден."
+            success = False
+        db.close()
+
+    db = SessionLocal()
+    all_emps_db = db.query(ScheduleEntry.employee_name).distinct().all()
+    managers_db = db.query(Manager).all()
+    users_list = db.query(User).all()
+    db.close()
+
+    return templates.TemplateResponse(
+        request=request, name="admin.html", 
+        context={
+            "user": user, "msg": msg, "success": success, "tab": "users",
+            "all_employees": sorted(list(set([r[0] for r in all_emps_db if r[0]]))),
+            "managers_list": [m.employee_name for m in managers_db],
+            "users_list": users_list
+        }
+    )
+
+@app.post("/admin/users/update-role")
+def update_user_role(request: Request, user_id: int = Form(...), new_role: str = Form(...), user = Depends(get_current_user)):
+    if not user or user.role not in ["admin", "manager"]:
+        return RedirectResponse(url="/", status_code=303)
+    db = SessionLocal()
+    target_user = db.query(User).filter(User.id == user_id).first()
+    if target_user:
+        if target_user.id == user.id and new_role != user.role:
+            msg = "Вы не можете изменить свою собственную роль."
+            success = False
+        else:
+            target_user.role = new_role
+            db.commit()
+            msg = f"Роль пользователя {target_user.full_name} изменена."
+            success = True
+    else:
+        msg = "Пользователь не найден."
+        success = False
+
+    all_emps_db = db.query(ScheduleEntry.employee_name).distinct().all()
+    managers_db = db.query(Manager).all()
+    users_list = db.query(User).all()
+    db.close()
+
+    return templates.TemplateResponse(
+        request=request, name="admin.html", 
+        context={
+            "user": user, "msg": msg, "success": success, "tab": "users",
+            "all_employees": sorted(list(set([r[0] for r in all_emps_db if r[0]]))),
+            "managers_list": [m.employee_name for m in managers_db],
+            "users_list": users_list
+        }
+    )
+
+@app.post("/admin/users/reset-password")
+def reset_user_password(request: Request, user_id: int = Form(...), new_password: str = Form(...), user = Depends(get_current_user)):
+    if not user or user.role not in ["admin", "manager"]:
+        return RedirectResponse(url="/", status_code=303)
+    db = SessionLocal()
+    target_user = db.query(User).filter(User.id == user_id).first()
+    if target_user:
+        target_user.password_hash = hash_password(new_password)
+        db.commit()
+        msg = f"Пароль для пользователя {target_user.full_name} успешно обновлен."
+        success = True
+    else:
+        msg = "Пользователь не найден."
+        success = False
+
+    all_emps_db = db.query(ScheduleEntry.employee_name).distinct().all()
+    managers_db = db.query(Manager).all()
+    users_list = db.query(User).all()
+    db.close()
+
+    return templates.TemplateResponse(
+        request=request, name="admin.html", 
+        context={
+            "user": user, "msg": msg, "success": success, "tab": "users",
+            "all_employees": sorted(list(set([r[0] for r in all_emps_db if r[0]]))),
+            "managers_list": [m.employee_name for m in managers_db],
+            "users_list": users_list
+        }
+    )
+
+@app.post("/admin/users/delete")
+def delete_user(request: Request, user_id: int = Form(...), user = Depends(get_current_user)):
+    if not user or user.role not in ["admin", "manager"]:
+        return RedirectResponse(url="/", status_code=303)
+    if user.id == user_id:
+        msg = "Нельзя удалить свою собственную учетную запись."
+        success = False
+    else:
+        db = SessionLocal()
+        u = db.query(User).filter(User.id == user_id).first()
+        if u:
+            db.delete(u)
+            db.commit()
+            msg = f"Пользователь {u.full_name} удален."
+            success = True
+        else:
+            msg = "Пользователь не найден."
+            success = False
+        db.close()
+
+    db = SessionLocal()
+    all_emps_db = db.query(ScheduleEntry.employee_name).distinct().all()
+    managers_db = db.query(Manager).all()
+    users_list = db.query(User).all()
+    db.close()
+
+    return templates.TemplateResponse(
+        request=request, name="admin.html", 
+        context={
+            "user": user, "msg": msg, "success": success, "tab": "users",
+            "all_employees": sorted(list(set([r[0] for r in all_emps_db if r[0]]))),
+            "managers_list": [m.employee_name for m in managers_db],
+            "users_list": users_list
         }
     )
 
 @app.post("/admin/clear-schedule")
 def clear_schedule(request: Request, user = Depends(get_current_user)):
-    if not user or user.role != "admin":
+    if not user or user.role not in ["admin", "manager"]:
         return RedirectResponse(url="/", status_code=303)
     db = SessionLocal()
     try:
@@ -162,25 +371,22 @@ def clear_schedule(request: Request, user = Depends(get_current_user)):
 
     all_emps_db = db.query(ScheduleEntry.employee_name).distinct().all()
     managers_db = db.query(Manager).all()
+    users_list = db.query(User).all()
     db.close()
-    all_employees = sorted(list(set([row[0] for row in all_emps_db if row[0]])))
-    managers_list = [m.employee_name for m in managers_db]
 
     return templates.TemplateResponse(
-        request=request, 
-        name="admin.html", 
+        request=request, name="admin.html", 
         context={
-            "user": user, 
-            "msg": msg, 
-            "success": success,
-            "all_employees": all_employees,
-            "managers_list": managers_list
+            "user": user, "msg": msg, "success": success, "tab": "schedule",
+            "all_employees": sorted(list(set([r[0] for r in all_emps_db if r[0]]))),
+            "managers_list": [m.employee_name for m in managers_db],
+            "users_list": users_list
         }
     )
 
 @app.post("/admin/add-manager")
 def add_manager(request: Request, employee_name: str = Form(...), user = Depends(get_current_user)):
-    if not user or user.role != "admin":
+    if not user or user.role not in ["admin", "manager"]:
         return RedirectResponse(url="/", status_code=303)
     db = SessionLocal()
     if employee_name and not db.query(Manager).filter(Manager.employee_name == employee_name).first():
@@ -194,25 +400,22 @@ def add_manager(request: Request, employee_name: str = Form(...), user = Depends
     
     all_emps_db = db.query(ScheduleEntry.employee_name).distinct().all()
     managers_db = db.query(Manager).all()
+    users_list = db.query(User).all()
     db.close()
-    all_employees = sorted(list(set([row[0] for row in all_emps_db if row[0]])))
-    managers_list = [m.employee_name for m in managers_db]
 
     return templates.TemplateResponse(
-        request=request, 
-        name="admin.html", 
+        request=request, name="admin.html", 
         context={
-            "user": user, 
-            "msg": msg, 
-            "success": success,
-            "all_employees": all_employees,
-            "managers_list": managers_list
+            "user": user, "msg": msg, "success": success, "tab": "schedule",
+            "all_employees": sorted(list(set([r[0] for r in all_emps_db if r[0]]))),
+            "managers_list": [m.employee_name for m in managers_db],
+            "users_list": users_list
         }
     )
 
 @app.post("/admin/delete-manager")
 def delete_manager(request: Request, employee_name: str = Form(...), user = Depends(get_current_user)):
-    if not user or user.role != "admin":
+    if not user or user.role not in ["admin", "manager"]:
         return RedirectResponse(url="/", status_code=303)
     db = SessionLocal()
     mgr = db.query(Manager).filter(Manager.employee_name == employee_name).first()
@@ -227,19 +430,16 @@ def delete_manager(request: Request, employee_name: str = Form(...), user = Depe
 
     all_emps_db = db.query(ScheduleEntry.employee_name).distinct().all()
     managers_db = db.query(Manager).all()
+    users_list = db.query(User).all()
     db.close()
-    all_employees = sorted(list(set([row[0] for row in all_emps_db if row[0]])))
-    managers_list = [m.employee_name for m in managers_db]
 
     return templates.TemplateResponse(
-        request=request, 
-        name="admin.html", 
+        request=request, name="admin.html", 
         context={
-            "user": user, 
-            "msg": msg, 
-            "success": success,
-            "all_employees": all_employees,
-            "managers_list": managers_list
+            "user": user, "msg": msg, "success": success, "tab": "schedule",
+            "all_employees": sorted(list(set([r[0] for r in all_emps_db if r[0]]))),
+            "managers_list": [m.employee_name for m in managers_db],
+            "users_list": users_list
         }
     )
 
@@ -253,32 +453,25 @@ def add_entry(
     status: str = Form(...),
     user = Depends(get_current_user)
 ):
-    if not user or user.role != "admin":
+    if not user or user.role not in ["admin", "manager"]:
         return RedirectResponse(url="/", status_code=303)
     
     db = SessionLocal()
     try:
         d = datetime.strptime(date_val, "%Y-%m-%d").date()
-        
         entry = db.query(ScheduleEntry).filter(ScheduleEntry.date == d, ScheduleEntry.employee_name == employee_name).first()
         if not entry:
             entry = ScheduleEntry(date=d, employee_name=employee_name)
             db.add(entry)
         
-        if shift_type != "none":
-            entry.shift_type = shift_type
-        else:
-            entry.shift_type = None
+        entry.shift_type = shift_type if shift_type != "none" else None
         
         if status == "vacation":
-            entry.is_vacation = True
-            entry.is_sick = False
+            entry.is_vacation, entry.is_sick = True, False
         elif status == "sick":
-            entry.is_vacation = False
-            entry.is_sick = True
+            entry.is_vacation, entry.is_sick = False, True
         else:
-            entry.is_vacation = False
-            entry.is_sick = False
+            entry.is_vacation, entry.is_sick = False, False
 
         if duty_system != "none":
             duty = db.query(DutyAssignment).filter(DutyAssignment.date == d, DutyAssignment.system == duty_system).first()
@@ -298,19 +491,16 @@ def add_entry(
     
     all_emps_db = db.query(ScheduleEntry.employee_name).distinct().all()
     managers_db = db.query(Manager).all()
+    users_list = db.query(User).all()
     db.close()
-    all_employees = sorted(list(set([row[0] for row in all_emps_db if row[0]])))
-    managers_list = [m.employee_name for m in managers_db]
 
     return templates.TemplateResponse(
-        request=request, 
-        name="admin.html", 
+        request=request, name="admin.html", 
         context={
-            "user": user, 
-            "msg": msg, 
-            "success": success,
-            "all_employees": all_employees,
-            "managers_list": managers_list
+            "user": user, "msg": msg, "success": success, "tab": "schedule",
+            "all_employees": sorted(list(set([r[0] for r in all_emps_db if r[0]]))),
+            "managers_list": [m.employee_name for m in managers_db],
+            "users_list": users_list
         }
     )
 
@@ -357,8 +547,7 @@ def get_events(start: str, end: str, user = Depends(get_current_user)):
 
     for item in entries:
         dedup_key = (item.employee_name, item.date)
-        if dedup_key in seen:
-            continue
+        if dedup_key in seen: continue
         seen.add(dedup_key)
 
         raw_et = str(item.shift_type or "").strip()
@@ -488,12 +677,9 @@ def get_day_details(date_str: str, user = Depends(get_current_user)):
     db.close()
 
     time_priority = {
-        "07:00": 1, "с 7": 1,
-        "09:00": 2, "с 9": 2,
-        "12:00": 3, "с 12": 3,
-        "15:00": 4, "с 15": 4,
-        "08:00": 5, "с 8": 5,
-        "10:00": 6, "с 10": 6
+        "07:00": 1, "с 7": 1, "09:00": 2, "с 9": 2,
+        "12:00": 3, "с 12": 3, "15:00": 4, "с 15": 4,
+        "08:00": 5, "с 8": 5, "10:00": 6, "с 10": 6
     }
     
     formatted_entries = []
@@ -527,7 +713,7 @@ def get_day_details(date_str: str, user = Depends(get_current_user)):
 
 @app.post("/admin/upload-excel")
 async def upload_excel(request: Request, file: UploadFile = File(...), user = Depends(get_current_user)):
-    if not user or user.role != "admin":
+    if not user or user.role not in ["admin", "manager"]:
         return RedirectResponse(url="/", status_code=303)
     tmp_path = f"/tmp/{file.filename}"
     with open(tmp_path, "wb") as buffer:
@@ -538,18 +724,15 @@ async def upload_excel(request: Request, file: UploadFile = File(...), user = De
     db = SessionLocal()
     all_emps_db = db.query(ScheduleEntry.employee_name).distinct().all()
     managers_db = db.query(Manager).all()
+    users_list = db.query(User).all()
     db.close()
-    all_employees = sorted(list(set([row[0] for row in all_emps_db if row[0]])))
-    managers_list = [m.employee_name for m in managers_db]
 
     return templates.TemplateResponse(
-        request=request, 
-        name="admin.html", 
+        request=request, name="admin.html", 
         context={
-            "user": user, 
-            "msg": msg, 
-            "success": ok,
-            "all_employees": all_employees,
-            "managers_list": managers_list
+            "user": user, "msg": msg, "success": ok, "tab": "schedule",
+            "all_employees": sorted(list(set([r[0] for r in all_emps_db if r[0]]))),
+            "managers_list": [m.employee_name for m in managers_db],
+            "users_list": users_list
         }
     )

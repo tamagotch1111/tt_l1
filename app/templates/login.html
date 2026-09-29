@@ -1,30 +1,70 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" class="h-full">
 <head>
     <meta charset="UTF-8">
-    <title>Вход в систему дежурств</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход — График Внутренняя L1</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: { extend: { colors: { corp: { red: '#c8102e', dark: '#9b0d23' } } } }
+        }
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0c0c0e;
+            background-image: 
+                radial-gradient(at 15% 20%, rgba(200, 16, 46, 0.22) 0px, transparent 55%),
+                radial-gradient(at 85% 15%, rgba(2, 132, 199, 0.16) 0px, transparent 50%),
+                radial-gradient(at 50% 85%, rgba(124, 58, 237, 0.18) 0px, transparent 60%);
+            background-attachment: fixed;
+        }
+        .ios-glass-card {
+            background: rgba(26, 26, 32, 0.75);
+            backdrop-filter: blur(35px) saturate(190%);
+            -webkit-backdrop-filter: blur(35px) saturate(190%);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 30px 70px -15px rgba(0, 0, 0, 0.8), 0 0 1px 1px rgba(255, 255, 255, 0.05) inset;
+        }
+    </style>
 </head>
-<body class="bg-zinc-100 flex items-center justify-center min-h-screen">
-    <div class="bg-white p-8 rounded-xl shadow-lg border-t-8 border-[#c8102e] w-full max-w-sm">
-        <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">Вход в систему</h1>
+<body class="h-full flex items-center justify-center p-4 text-white">
+    <div class="ios-glass-card rounded-[32px] p-8 max-w-sm w-full transition-all shadow-2xl">
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-corp-red mb-3 shadow-lg shadow-corp-red/40">
+                <span class="text-xl">📅</span>
+            </div>
+            <h1 class="text-xl font-extrabold tracking-tight">График Внутренняя L1</h1>
+            <p class="text-xs text-gray-400 mt-1">Авторизуйтесь для доступа к расписанию</p>
+        </div>
+
         {% if error %}
-        <div class="bg-red-50 text-red-600 p-3 rounded mb-4 text-sm">{{ error }}</div>
+        <div class="mb-5 p-3 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-400 text-xs font-semibold text-center">
+            {{ error }}
+        </div>
         {% endif %}
+
         <form method="post" action="/login" class="space-y-4">
             <div>
-                <label class="block text-xs uppercase font-bold text-gray-600 mb-1">Логин</label>
-                <input type="text" name="username" required class="w-full border rounded p-2.5 outline-none focus:border-[#c8102e]">
+                <label class="block text-xs font-semibold text-gray-300 mb-1.5 ml-1">Логин</label>
+                <input type="text" name="username" required autofocus placeholder="Ваш логин"
+                       class="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-xs text-white placeholder-gray-500 outline-none focus:border-corp-red transition">
             </div>
+
             <div>
-                <label class="block text-xs uppercase font-bold text-gray-600 mb-1">Пароль</label>
-                <input type="password" name="password" required class="w-full border rounded p-2.5 outline-none focus:border-[#c8102e]">
+                <label class="block text-xs font-semibold text-gray-300 mb-1.5 ml-1">Пароль</label>
+                <input type="password" name="password" required placeholder="••••••••"
+                       class="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-xs text-white placeholder-gray-500 outline-none focus:border-corp-red transition">
             </div>
-            <button type="submit" class="w-full bg-[#c8102e] hover:bg-[#9b0d23] text-white font-bold py-2.5 rounded transition">
-                Войти
+
+            <button type="submit" class="w-full mt-2 py-3.5 rounded-2xl bg-corp-red hover:bg-corp-dark text-white font-extrabold text-xs shadow-xl shadow-corp-red/30 transition active:scale-95">
+                Войти в систему
             </button>
         </form>
-        <p class="text-xs text-gray-400 mt-4 text-center">Администратор: admin / admin123<br>Сотрудник: user / user123</p>
     </div>
 </body>
 </html>

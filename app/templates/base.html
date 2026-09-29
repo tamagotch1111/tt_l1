@@ -3,8 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Внутренняя L1 — График смен и дежурств</title>
+    <title>График Внутренняя L1</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/main.min.css' rel='stylesheet' />
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js'></script>
+    <script src='https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.10/locales/ru.global.min.js'></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -50,16 +53,54 @@
             box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.5), 0 0 1px 1px rgba(255, 255, 255, 0.06) inset;
         }
 
-        html.dark,
-        .dark input,
-        .dark select,
-        .dark textarea {
-            color-scheme: dark;
+        .ios-dropdown-menu {
+            background: rgba(255, 255, 255, 0.90);
+            backdrop-filter: blur(35px) saturate(190%);
+            -webkit-backdrop-filter: blur(35px) saturate(190%);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.25);
         }
-        .dark select option {
-            background-color: #1c1c22 !important;
-            color: #f1f5f9 !important;
+        .dark .ios-dropdown-menu {
+            background: rgba(32, 32, 38, 0.94);
+            backdrop-filter: blur(35px) saturate(190%);
+            -webkit-backdrop-filter: blur(35px) saturate(190%);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.65);
         }
+
+        @keyframes dropdownPop {
+            0% { opacity: 0; transform: scale(0.95) translateY(-6px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .animate-dropdown {
+            animation: dropdownPop 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .ios-modal-backdrop {
+            background: rgba(0, 0, 0, 0.55);
+            backdrop-filter: blur(20px) saturate(130%);
+            -webkit-backdrop-filter: blur(20px) saturate(130%);
+        }
+        .ios-glass-card {
+            background: rgba(255, 255, 255, 0.92);
+            border: 1px solid rgba(255, 255, 255, 0.65);
+            box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.35);
+        }
+        .dark .ios-glass-card {
+            background: rgba(28, 28, 34, 0.94);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 30px 70px -12px rgba(0, 0, 0, 0.75);
+        }
+
+        @keyframes iosSpringPop {
+            0% { opacity: 0; transform: scale(0.92) translateY(16px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .animate-ios {
+            animation: iosSpringPop 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        html.dark, .dark input, .dark select, .dark textarea { color-scheme: dark; }
     </style>
     <script>
         if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
@@ -79,25 +120,63 @@
     </script>
 </head>
 <body class="text-gray-900 dark:text-gray-100 flex flex-col min-h-screen transition-colors duration-300">
-    <!-- ПЛАВАЮЩАЯ ШАПКА: СТРОГО БЕЗ ПОЛОС НА ЭКРАНЕ -->
     <header class="sticky top-0 z-40 px-4 pt-2.5 pb-2 bg-transparent pointer-events-none">
         <div class="max-w-7xl mx-auto rounded-[24px] px-6 h-14 flex items-center justify-between bg-corp-red dark:bg-[#7a0a1c] border border-white/25 shadow-xl text-white pointer-events-auto">
             <div class="flex items-center space-x-6">
-                <span class="font-extrabold text-lg tracking-wide uppercase flex items-center gap-2">
+                <a href="/" class="font-extrabold text-base sm:text-lg tracking-wide uppercase flex items-center gap-2">
                     <span class="w-2.5 h-2.5 rounded-full bg-white/90 animate-pulse"></span>
-                    Внутренняя L1
-                </span>
+                    График Внутренняя L1
+                </a>
                 <nav class="flex space-x-2 text-xs font-semibold">
                     <a href="/" class="bg-white/15 hover:bg-white/25 px-3 py-1.5 rounded-xl transition">Главная</a>
-                    {% if user.role == 'admin' %}
-                    <a href="/admin" class="hover:bg-white/20 px-3 py-1.5 rounded-xl transition border border-white/20">⚙️ Админка</a>
+                    {% if user and user.role in ['admin', 'manager'] %}
+                    <a href="/admin" class="hover:bg-white/20 px-3 py-1.5 rounded-xl transition border border-white/20">⚙️ Панель управления</a>
                     {% endif %}
                 </nav>
             </div>
-            <div class="flex items-center space-x-4 text-xs">
+            
+            <div class="flex items-center space-x-3 text-xs">
                 <button onclick="toggleDark()" class="bg-black/20 hover:bg-black/35 px-3 py-1.5 rounded-full font-medium transition active:scale-95">🌓 Тема</button>
-                <span class="font-light opacity-90 hidden sm:inline">{{ user.full_name }}</span>
-                <a href="/logout" class="underline text-red-200 hover:text-white transition">Выход</a>
+                
+                {% if user %}
+                <!-- Кнопка Личного кабинета: только ФИО + стрелочка -->
+                <div class="relative user-menu-container">
+                    <button type="button" onclick="toggleUserDropdown(event)" 
+                            class="flex items-center gap-2 bg-white/15 hover:bg-white/25 px-3.5 py-1.5 rounded-xl transition font-medium border border-white/15 cursor-pointer select-none active:scale-95">
+                        <span class="opacity-90">👤</span>
+                        <span class="font-semibold">{{ user.full_name }}</span>
+                        <span class="text-[10px] text-white/70">▼</span>
+                    </button>
+
+                    <!-- Выпадающее меню действий профиля -->
+                    <div id="userDropdownMenu" class="hidden absolute right-0 mt-2 w-56 ios-dropdown-menu rounded-2xl p-1.5 z-50 animate-dropdown text-gray-800 dark:text-gray-100 shadow-2xl">
+                        <div class="px-3.5 py-2.5 border-b border-black/5 dark:border-white/10 mb-1">
+                            <div class="font-bold text-xs truncate">{{ user.full_name }}</div>
+                            <div class="text-[11px] mt-0.5">
+                                {% if user.role == 'admin' %}
+                                    <span class="text-rose-600 dark:text-rose-400 font-semibold">Администратор</span>
+                                {% elif user.role == 'manager' %}
+                                    <span class="text-purple-600 dark:text-purple-400 font-semibold">Руководитель</span>
+                                {% else %}
+                                    <span class="text-slate-500 dark:text-slate-400 font-semibold">Сотрудник</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <button type="button" onclick="openProfileModal(); closeUserDropdown();" 
+                                class="w-full text-left px-3 py-2 text-xs rounded-xl hover:bg-corp-red hover:text-white flex items-center gap-2.5 transition font-medium cursor-pointer">
+                            <span>🔑</span>
+                            <span>Сменить пароль</span>
+                        </button>
+                        
+                        <a href="/logout" 
+                           class="w-full text-left px-3 py-2 text-xs rounded-xl hover:bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center gap-2.5 transition font-medium">
+                            <span>🚪</span>
+                            <span>Выйти</span>
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
             </div>
         </div>
     </header>
@@ -105,5 +184,81 @@
     <main class="flex-grow max-w-7xl mx-auto px-4 pt-2 pb-12 w-full">
         {% block content %}{% endblock %}
     </main>
+
+    <!-- МОДАЛЬНОЕ ОКНО СМЕНЫ ПАРОЛЯ -->
+    <div id="profileModal" class="fixed inset-0 ios-modal-backdrop hidden items-center justify-center p-4 z-50">
+        <div class="ios-glass-card rounded-[28px] max-w-sm w-full p-6 animate-ios">
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <h3 class="text-lg font-bold">Смена пароля</h3>
+                    <p class="text-xs text-gray-400">Введите текущий и новый пароль</p>
+                </div>
+                <button onclick="closeProfileModal()" class="w-7 h-7 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center text-xs font-bold transition active:scale-90">✕</button>
+            </div>
+
+            <form id="changePasswordForm" onsubmit="submitChangePassword(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-semibold mb-1 opacity-75">Текущий пароль</label>
+                    <input type="password" id="oldPwd" required class="w-full bg-black/5 dark:bg-white/10 border border-black/10 dark:border-white/15 rounded-xl px-3 py-2 text-xs outline-none focus:border-corp-red">
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1 opacity-75">Новый пароль</label>
+                    <input type="password" id="newPwd" required minlength="4" class="w-full bg-black/5 dark:bg-white/10 border border-black/10 dark:border-white/15 rounded-xl px-3 py-2 text-xs outline-none focus:border-corp-red">
+                </div>
+                <div id="pwdAlert" class="hidden text-[11px] font-medium p-2 rounded-xl"></div>
+                <button type="submit" class="w-full py-2.5 rounded-xl bg-corp-red hover:bg-corp-dark text-white font-bold transition active:scale-95 shadow">Сохранить новый пароль</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function toggleUserDropdown(e) {
+            e.stopPropagation();
+            const menu = document.getElementById('userDropdownMenu');
+            menu.classList.toggle('hidden');
+        }
+        function closeUserDropdown() {
+            const menu = document.getElementById('userDropdownMenu');
+            if (menu) menu.classList.add('hidden');
+        }
+        window.addEventListener('click', function(e) {
+            if (!e.target.closest('.user-menu-container')) {
+                closeUserDropdown();
+            }
+        });
+
+        function openProfileModal() {
+            document.getElementById('profileModal').classList.remove('hidden');
+            document.getElementById('profileModal').classList.add('flex');
+            document.getElementById('oldPwd').value = '';
+            document.getElementById('newPwd').value = '';
+            document.getElementById('pwdAlert').classList.add('hidden');
+        }
+        function closeProfileModal() {
+            document.getElementById('profileModal').classList.add('hidden');
+            document.getElementById('profileModal').classList.remove('flex');
+        }
+        function submitChangePassword(e) {
+            e.preventDefault();
+            const alertBox = document.getElementById('pwdAlert');
+            const formData = new FormData();
+            formData.append('old_password', document.getElementById('oldPwd').value);
+            formData.append('new_password', document.getElementById('newPwd').value);
+
+            fetch('/api/change-password', { method: 'POST', body: formData })
+                .then(r => r.json())
+                .then(data => {
+                    alertBox.classList.remove('hidden');
+                    if (data.success) {
+                        alertBox.className = 'text-[11px] font-medium p-2.5 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20';
+                        alertBox.innerText = 'Пароль успешно изменен!';
+                        setTimeout(closeProfileModal, 1200);
+                    } else {
+                        alertBox.className = 'text-[11px] font-medium p-2.5 rounded-xl bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/20';
+                        alertBox.innerText = data.error || 'Ошибка смены пароля';
+                    }
+                });
+        }
+    </script>
 </body>
 </html>

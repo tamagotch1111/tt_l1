@@ -1,11 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
 
-<!-- Подключаем FullCalendar напрямую -->
-<link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/main.min.css' rel='stylesheet' />
-<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js'></script>
-<script src='https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.10/locales/ru.global.min.js'></script>
-
 <style>
     .fc {
         --fc-border-color: rgba(0, 0, 0, 0.08) !important;
@@ -109,7 +104,6 @@
         color: #94a3b8 !important;
     }
 
-    /* ФИКСИРОВАННАЯ ШАПКА ДНЯ — ЧИСЛО ВСЕГДА СПРАВА */
     .fc-daygrid-day-top {
         height: 25px !important;
         padding: 2px 4px 0 0 !important;
@@ -120,26 +114,18 @@
         line-height: 22px !important;
         padding: 0 4px !important;
     }
-    .dark .fc-daygrid-day-number {
-        color: #cbd5e1 !important;
-    }
-    .dark .fc-day-other .fc-daygrid-day-number {
-        color: #475569 !important;
-    }
+    .dark .fc-daygrid-day-number { color: #cbd5e1 !important; }
+    .dark .fc-day-other .fc-daygrid-day-number { color: #475569 !important; }
 
-    /* МЯГКАЯ ПОДСВЕТКА СЕГОДНЯШНЕГО ДНЯ */
-    .dark td.fc-day-today,
-    .dark .fc-daygrid-day.fc-day-today {
+    .dark td.fc-day-today, .dark .fc-daygrid-day.fc-day-today {
         background: rgba(200, 16, 46, 0.08) !important;
         border-color: rgba(255, 255, 255, 0.07) !important;
     }
-    td.fc-day-today,
-    .fc-daygrid-day.fc-day-today {
+    td.fc-day-today, .fc-daygrid-day.fc-day-today {
         background: rgba(200, 16, 46, 0.04) !important;
         border-color: rgba(0, 0, 0, 0.08) !important;
     }
 
-    /* КРУГЛЫЙ БЕЙДЖ ДАТЫ: СПРАВА, БЕЗ СМЕЩЕНИЙ */
     .fc-day-today .fc-daygrid-day-number {
         background: #c8102e !important;
         color: #ffffff !important;
@@ -181,20 +167,12 @@
     .dark .ios-inner-scroll {
         scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
     }
-    .ios-inner-scroll::-webkit-scrollbar {
-        width: 5px;
-    }
-    .ios-inner-scroll::-webkit-scrollbar-track {
-        background: transparent;
-        margin: 6px 0;
-    }
+    .ios-inner-scroll::-webkit-scrollbar { width: 5px; }
     .ios-inner-scroll::-webkit-scrollbar-thumb {
         background: rgba(0, 0, 0, 0.22);
         border-radius: 9999px;
     }
-    .dark .ios-inner-scroll::-webkit-scrollbar-thumb {
-        background: rgba(255, 255, 255, 0.22);
-    }
+    .dark .ios-inner-scroll::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.22); }
 
     .ios-dropdown-menu {
         background: rgba(255, 255, 255, 0.88);
@@ -210,31 +188,12 @@
         border: 1px solid rgba(255, 255, 255, 0.12);
         box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.65);
     }
-
     @keyframes dropdownPop {
         0% { opacity: 0; transform: scale(0.95) translateY(-6px); }
         100% { opacity: 1; transform: scale(1) translateY(0); }
     }
     .animate-dropdown {
         animation: dropdownPop 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
-
-    /* МОДАЛЬНОЕ ОКНО */
-    .ios-modal-backdrop {
-        background: rgba(0, 0, 0, 0.55);
-        backdrop-filter: blur(20px) saturate(130%);
-        -webkit-backdrop-filter: blur(20px) saturate(130%);
-    }
-
-    .ios-glass-card {
-        background: rgba(255, 255, 255, 0.92);
-        border: 1px solid rgba(255, 255, 255, 0.65);
-        box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.35);
-    }
-    .dark .ios-glass-card {
-        background: rgba(28, 28, 34, 0.94);
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        box-shadow: 0 30px 70px -12px rgba(0, 0, 0, 0.75);
     }
 
     .ios-inner-group {
@@ -245,7 +204,6 @@
         background: rgba(255, 255, 255, 0.05);
         border: 1px solid rgba(255, 255, 255, 0.08);
     }
-
     .ios-scroll-fade {
         overflow-y: auto;
         scrollbar-width: thin;
@@ -253,27 +211,10 @@
         mask-image: linear-gradient(to bottom, transparent 0px, black 24px, black calc(100% - 28px), transparent 100%);
         -webkit-mask-image: linear-gradient(to bottom, transparent 0px, black 24px, black calc(100% - 28px), transparent 100%);
     }
-    .dark .ios-scroll-fade {
-        scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
-    }
-    .ios-scroll-fade::-webkit-scrollbar {
-        width: 5px;
-    }
-    .ios-scroll-fade::-webkit-scrollbar-thumb {
-        background: rgba(0, 0, 0, 0.22);
-        border-radius: 9999px;
-    }
-    .dark .ios-scroll-fade::-webkit-scrollbar-thumb {
-        background: rgba(255, 255, 255, 0.22);
-    }
-
-    @keyframes iosSpringPop {
-        0% { opacity: 0; transform: scale(0.92) translateY(16px); }
-        100% { opacity: 1; transform: scale(1) translateY(0); }
-    }
-    .animate-ios {
-        animation: iosSpringPop 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
+    .dark .ios-scroll-fade { scrollbar-color: rgba(255, 255, 255, 0.22) transparent; }
+    .ios-scroll-fade::-webkit-scrollbar { width: 5px; }
+    .ios-scroll-fade::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.22); border-radius: 9999px; }
+    .dark .ios-scroll-fade::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.22); }
 </style>
 
 <div class="mb-6 flex justify-between items-center">
@@ -290,20 +231,14 @@
 
         {% for sys_name, title in [("МБ", "Сегодня в МБ"), ("НРД", "Сегодня в НРД"), ("НКЦ", "Сегодня в НКЦ")] %}
         <div class="ios-glass rounded-[24px] p-5 border-l-4 border-l-corp-red">
-            <div class="text-[11px] uppercase font-bold tracking-wider text-gray-400 mb-2">
-                {{ title }}
-            </div>
-            
+            <div class="text-[11px] uppercase font-bold tracking-wider text-gray-400 mb-2">{{ title }}</div>
             {% set r = blocks.reg[sys_name] %}
             {% if r.main or r.morning or r.evening %}
                 {% if r.main %}
-                <div class="text-base font-bold text-corp-red dark:text-red-400 mb-2 leading-snug">
-                    {{ r.main }}
-                </div>
+                <div class="text-base font-bold text-corp-red dark:text-red-400 mb-2 leading-snug">{{ r.main }}</div>
                 {% else %}
                 <div class="text-xs text-gray-400 italic mb-2">Основной не назначен</div>
                 {% endif %}
-
                 <div class="space-y-1.5 pt-2.5 border-t border-black/5 dark:border-white/10 text-xs">
                     {% if r.morning %}
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-0.5">
@@ -333,23 +268,17 @@
 
         <div class="ios-glass rounded-[24px] p-5 border-l-4 border-l-red-500">
             <div class="text-[11px] uppercase font-bold tracking-wider text-gray-400 mb-2">Смена 07:00</div>
-            {% if blocks.s7 %}
-                <ul class="space-y-1 font-medium text-xs">{% for name in blocks.s7 %}<li>• {{ name }}</li>{% endfor %}</ul>
-            {% else %}<span class="text-gray-400 text-xs italic">Нет смен</span>{% endif %}
+            {% if blocks.s7 %}<ul class="space-y-1 font-medium text-xs">{% for name in blocks.s7 %}<li>• {{ name }}</li>{% endfor %}</ul>{% else %}<span class="text-gray-400 text-xs italic">Нет смен</span>{% endif %}
         </div>
 
         <div class="ios-glass rounded-[24px] p-5 border-l-4 border-l-sky-500">
             <div class="text-[11px] uppercase font-bold tracking-wider text-gray-400 mb-2">Смена 12:00</div>
-            {% if blocks.s12 %}
-                <ul class="space-y-1 font-medium text-xs">{% for name in blocks.s12 %}<li>• {{ name }}</li>{% endfor %}</ul>
-            {% else %}<span class="text-gray-400 text-xs italic">Нет смен</span>{% endif %}
+            {% if blocks.s12 %}<ul class="space-y-1 font-medium text-xs">{% for name in blocks.s12 %}<li>• {{ name }}</li>{% endfor %}</ul>{% else %}<span class="text-gray-400 text-xs italic">Нет смен</span>{% endif %}
         </div>
 
         <div class="ios-glass rounded-[24px] p-5 border-l-4 border-l-purple-500">
             <div class="text-[11px] uppercase font-bold tracking-wider text-gray-400 mb-2">Смена 15:00</div>
-            {% if blocks.s15 %}
-                <ul class="space-y-1 font-medium text-xs">{% for name in blocks.s15 %}<li>• {{ name }}</li>{% endfor %}</ul>
-            {% else %}<span class="text-gray-400 text-xs italic">Нет смен</span>{% endif %}
+            {% if blocks.s15 %}<ul class="space-y-1 font-medium text-xs">{% for name in blocks.s15 %}<li>• {{ name }}</li>{% endfor %}</ul>{% else %}<span class="text-gray-400 text-xs italic">Нет смен</span>{% endif %}
         </div>
 
         <div class="ios-glass rounded-[24px] p-5 border-l-4 border-l-[#9b0d23]">
@@ -370,20 +299,12 @@
 
         <div class="ios-glass rounded-[24px] p-5 border-l-4 border-l-amber-500">
             <div class="text-[11px] uppercase font-bold tracking-wider text-gray-400 mb-2">🏖 В отпуске</div>
-            {% if blocks.vacation %}
-                <ul class="space-y-1 font-medium text-xs text-amber-600 dark:text-amber-400">
-                    {% for name in blocks.vacation %}<li>• {{ name }}</li>{% endfor %}
-                </ul>
-            {% else %}<span class="text-gray-400 text-xs italic">Отпусков нет</span>{% endif %}
+            {% if blocks.vacation %}<ul class="space-y-1 font-medium text-xs text-amber-600 dark:text-amber-400">{% for name in blocks.vacation %}<li>• {{ name }}</li>{% endfor %}</ul>{% else %}<span class="text-gray-400 text-xs italic">Отпусков нет</span>{% endif %}
         </div>
 
         <div class="ios-glass rounded-[24px] p-5 border-l-4 border-l-orange-500">
             <div class="text-[11px] uppercase font-bold tracking-wider text-gray-400 mb-2">💊 На больничном</div>
-            {% if blocks.sick %}
-                <ul class="space-y-1 font-medium text-xs text-orange-600 dark:text-orange-400">
-                    {% for name in blocks.sick %}<li>• {{ name }}</li>{% endfor %}
-                </ul>
-            {% else %}<span class="text-gray-400 text-xs italic">Все здоровы</span>{% endif %}
+            {% if blocks.sick %}<ul class="space-y-1 font-medium text-xs text-orange-600 dark:text-orange-400">{% for name in blocks.sick %}<li>• {{ name }}</li>{% endfor %}</ul>{% else %}<span class="text-gray-400 text-xs italic">Все здоровы</span>{% endif %}
         </div>
 
         <div class="pb-1 font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider text-xs flex items-center gap-1.5 ml-1 mt-2">
@@ -406,12 +327,12 @@
 
 </div>
 
-<!-- СТЕКЛЯННЫЙ ИНТЕРАКТИВНЫЙ КАЛЕНДАРЬ -->
+<!-- ИНТЕРАКТИВНЫЙ КАЛЕНДАРЬ -->
 <div class="ios-glass rounded-[28px] p-6">
     <div class="flex flex-col lg:flex-row justify-between lg:items-center mb-5 gap-3">
         <div>
             <h2 class="text-xl font-extrabold tracking-tight text-gray-900 dark:text-white">📅 График смен и отпусков</h2>
-            <p class="text-xs text-gray-400">Используйте фильтры ниже для поиска смен конкретных сотрудников</p>
+            <p class="text-xs text-gray-400">Используйте фильтры для поиска смен конкретных сотрудников</p>
         </div>
 
         <div class="flex flex-wrap items-center gap-1.5 text-xs font-semibold select-none">
@@ -420,20 +341,20 @@
             <span class="px-2.5 py-1 rounded-lg bg-sky-600 text-white shadow-sm">12:00</span>
             <span class="px-2.5 py-1 rounded-lg bg-purple-600 text-white shadow-sm">15:00</span>
             <span class="px-2.5 py-1 rounded-lg bg-[#9b0d23] text-white shadow-sm">08:00 / 10:00 (сменщики)</span>
-            <span class="px-2.5 py-1 rounded-lg bg-amber-600 text-white shadow-sm flex items-center gap-1">
-                <span>🏖</span><span>Отпуск</span>
-            </span>
-            <span class="px-2.5 py-1 rounded-lg bg-orange-600 text-white shadow-sm flex items-center gap-1">
-                <span>💊</span><span>Больничный</span>
-            </span>
+            <span class="px-2.5 py-1 rounded-lg bg-amber-600 text-white shadow-sm flex items-center gap-1"><span>🏖</span><span>Отпуск</span></span>
+            <span class="px-2.5 py-1 rounded-lg bg-orange-600 text-white shadow-sm flex items-center gap-1"><span>💊</span><span>Больничный</span></span>
         </div>
     </div>
 
-    <!-- ПАНЕЛЬ ФИЛЬТРОВ -->
+    <!-- ПАНЕЛЬ ФИЛЬТРОВ С КНОПКОЙ "МОИ СМЕНЫ" -->
     <div class="mb-5 p-3.5 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 flex flex-wrap items-center gap-3 relative z-30">
-        <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-            <span>🔍 Фильтры календаря:</span>
-        </div>
+        
+        <!-- Быстрая кнопка "Мои смены" -->
+        <button onclick="selectMyShifts()" 
+                class="px-3 py-2 rounded-xl bg-corp-red hover:bg-corp-dark text-white text-xs font-bold transition active:scale-95 flex items-center gap-1.5 shadow-md shadow-corp-red/20">
+            <span>⚡</span>
+            <span>Мои смены</span>
+        </button>
 
         <div class="relative">
             <input type="hidden" id="valEmployee" value="all">
@@ -442,7 +363,6 @@
                 <span id="labelEmployee" class="font-medium">Все сотрудники</span>
                 <span class="text-gray-400 text-[10px]">▼</span>
             </button>
-            
             <div id="empDropdown" class="hidden absolute left-0 mt-2 w-64 max-h-60 ios-inner-scroll ios-dropdown-menu rounded-2xl p-1.5 z-50 animate-dropdown">
                 <div onclick="selectEmployee('all', 'Все сотрудники')" class="px-3 py-2 text-xs rounded-xl hover:bg-corp-red hover:text-white cursor-pointer transition font-medium">Все сотрудники</div>
                 <div onclick="selectEmployee('no_managers', '👥 Все сотрудники без руководителей')" class="px-3 py-2 text-xs rounded-xl hover:bg-corp-red hover:text-white cursor-pointer transition font-bold text-rose-600 dark:text-rose-400 border-b border-black/5 dark:border-white/5 mb-1">👥 Все сотрудники без руководителей</div>
@@ -459,7 +379,6 @@
                 <span id="labelCategory" class="font-medium">Все события</span>
                 <span class="text-gray-400 text-[10px]">▼</span>
             </button>
-            
             <div id="catDropdown" class="hidden absolute left-0 mt-2 w-52 ios-inner-scroll ios-dropdown-menu rounded-2xl p-1.5 z-50 animate-dropdown">
                 <div onclick="selectCategory('all', 'Все события')" class="px-3 py-2 text-xs rounded-xl hover:bg-corp-red hover:text-white cursor-pointer transition font-medium">Все события</div>
                 <div onclick="selectCategory('07:00', '🔴 Смена 07:00')" class="px-3 py-2 text-xs rounded-xl hover:bg-corp-red hover:text-white cursor-pointer transition font-medium">🔴 Смена 07:00</div>
@@ -481,28 +400,21 @@
     <div id='calendar'></div>
 </div>
 
-<!-- МОДАЛЬНОЕ ОКНО ДЕТАЛЕЙ ДНЯ -->
-<div id="dayModal" class="fixed inset-0 ios-modal-backdrop hidden items-center justify-center p-4 z-50 transition-all duration-300">
+<!-- МОДАЛЬНОЕ ОКНО ДНЯ -->
+<div id="dayModal" class="fixed inset-0 ios-modal-backdrop hidden items-center justify-center p-4 z-50">
     <div class="ios-glass-card rounded-[32px] max-w-md w-full flex flex-col max-h-[82vh] overflow-hidden animate-ios">
-        
         <div class="px-6 pt-7 pb-3 flex justify-between items-start shrink-0 z-20">
             <div>
                 <p class="text-[11px] font-bold tracking-wider uppercase text-gray-400 mb-0.5">Расписание на день</p>
                 <h3 id="modalTitle" class="text-2xl font-extrabold tracking-tight text-corp-red dark:text-red-400">График</h3>
             </div>
-            <button onclick="closeDayModal()" class="w-8 h-8 rounded-full bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 flex items-center justify-center text-gray-600 dark:text-gray-300 transition active:scale-90 font-bold text-sm mt-0.5">
-                ✕
-            </button>
+            <button onclick="closeDayModal()" class="w-8 h-8 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center text-gray-600 dark:text-gray-300 font-bold text-sm">✕</button>
         </div>
-        
         <div class="px-6 py-2 ios-scroll-fade flex-grow space-y-4">
             <div id="modalContent" class="space-y-4 pt-1 pb-4"></div>
         </div>
-
         <div class="px-6 pt-2 pb-6 shrink-0 text-center z-20">
-            <button onclick="closeDayModal()" class="w-full py-3 rounded-2xl bg-corp-red hover:bg-corp-dark text-white font-bold text-sm shadow-xl transition active:scale-95">
-                Готово
-            </button>
+            <button onclick="closeDayModal()" class="w-full py-3 rounded-2xl bg-corp-red hover:bg-corp-dark text-white font-bold text-sm shadow-xl transition active:scale-95">Готово</button>
         </div>
     </div>
 </div>
@@ -510,13 +422,12 @@
 <script>
     var globalCalendar = null;
     const managerNames = {{ manager_names | default([]) | tojson }};
+    const currentUserFullName = {{ user.full_name | tojson }};
 
     function toggleDropdown(id) {
         const menu = document.getElementById(id);
         const allMenus = document.querySelectorAll('.ios-dropdown-menu');
-        allMenus.forEach(m => {
-            if (m.id !== id) m.classList.add('hidden');
-        });
+        allMenus.forEach(m => { if (m.id !== id) m.classList.add('hidden'); });
         menu.classList.toggle('hidden');
     }
 
@@ -531,6 +442,11 @@
         document.getElementById('labelEmployee').innerText = label;
         document.getElementById('empDropdown').classList.add('hidden');
         applyCalendarFilters();
+    }
+
+    function selectMyShifts() {
+        if (!currentUserFullName) return;
+        selectEmployee(currentUserFullName, `⚡ ${currentUserFullName}`);
     }
 
     function selectCategory(val, label) {
@@ -553,20 +469,12 @@
     function renderShiftBadge(shiftStr) {
         if (!shiftStr) return '';
         let s = shiftStr.trim();
-        
-        if (s.includes('07:00') || s === 'с 7') {
-            return `<span class="px-2.5 py-0.5 rounded-lg text-xs font-bold bg-red-500/15 text-red-600 dark:text-red-400 border border-red-500/25">07:00</span>`;
-        } else if (s.includes('09:00') || s === 'с 9') {
-            return `<span class="px-2.5 py-0.5 rounded-lg text-xs font-bold bg-slate-500/15 text-slate-700 dark:text-slate-300 border border-slate-500/25">09:00</span>`;
-        } else if (s.includes('12:00') || s === 'с 12') {
-            return `<span class="px-2.5 py-0.5 rounded-lg text-xs font-bold bg-sky-500/15 text-sky-600 dark:text-sky-400 border border-sky-500/25">12:00</span>`;
-        } else if (s.includes('15:00') || s === 'с 15') {
-            return `<span class="px-2.5 py-0.5 rounded-lg text-xs font-bold bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/25">15:00</span>`;
-        } else if (s.includes('08:00') || s === 'с 8') {
-            return `<span class="px-2.5 py-0.5 rounded-lg text-xs font-bold bg-rose-900/20 text-rose-700 dark:text-rose-400 border border-rose-900/30">08:00 (сменщик)</span>`;
-        } else if (s.includes('10:00') || s === 'с 10') {
-            return `<span class="px-2.5 py-0.5 rounded-lg text-xs font-bold bg-[#9b0d23]/20 text-[#c8102e] dark:text-rose-400 border border-[#9b0d23]/30">10:00 (сменщик)</span>`;
-        }
+        if (s.includes('07:00') || s === 'с 7') return `<span class="px-2.5 py-0.5 rounded-lg text-xs font-bold bg-red-500/15 text-red-600 dark:text-red-400 border border-red-500/25">07:00</span>`;
+        if (s.includes('09:00') || s === 'с 9') return `<span class="px-2.5 py-0.5 rounded-lg text-xs font-bold bg-slate-500/15 text-slate-700 dark:text-slate-300 border border-slate-500/25">09:00</span>`;
+        if (s.includes('12:00') || s === 'с 12') return `<span class="px-2.5 py-0.5 rounded-lg text-xs font-bold bg-sky-500/15 text-sky-600 dark:text-sky-400 border border-sky-500/25">12:00</span>`;
+        if (s.includes('15:00') || s === 'с 15') return `<span class="px-2.5 py-0.5 rounded-lg text-xs font-bold bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/25">15:00</span>`;
+        if (s.includes('08:00') || s === 'с 8') return `<span class="px-2.5 py-0.5 rounded-lg text-xs font-bold bg-rose-900/20 text-rose-700 dark:text-rose-400 border border-rose-900/30">08:00 (сменщик)</span>`;
+        if (s.includes('10:00') || s === 'с 10') return `<span class="px-2.5 py-0.5 rounded-lg text-xs font-bold bg-[#9b0d23]/20 text-[#c8102e] dark:text-rose-400 border border-[#9b0d23]/30">10:00 (сменщик)</span>`;
         return `<span class="px-2.5 py-0.5 rounded-lg text-xs font-bold bg-gray-500/15 text-gray-700 dark:text-gray-300">${s}</span>`;
     }
 
@@ -659,11 +567,7 @@
         allEvents.forEach(evt => {
             const props = evt.extendedProps || {};
             if (props.is_divider) {
-                if (selectedEmp === 'all' && selectedCat === 'all') {
-                    evt.setProp('display', 'auto');
-                } else {
-                    evt.setProp('display', 'none');
-                }
+                evt.setProp('display', (selectedEmp === 'all' && selectedCat === 'all') ? 'auto' : 'none');
                 return;
             }
 
@@ -671,16 +575,12 @@
             if (selectedEmp === 'no_managers') {
                 matchEmp = !managerNames.includes(props.full_name);
             } else if (selectedEmp !== 'all') {
-                matchEmp = (props.full_name === selectedEmp);
+                // Сравнение по полному имени или фамилии
+                matchEmp = (props.full_name === selectedEmp || props.full_name.includes(selectedEmp) || selectedEmp.includes(props.full_name));
             }
 
             const matchCat = (selectedCat === 'all') || (props.category === selectedCat);
-
-            if (matchEmp && matchCat) {
-                evt.setProp('display', 'auto');
-            } else {
-                evt.setProp('display', 'none');
-            }
+            evt.setProp('display', (matchEmp && matchCat) ? 'auto' : 'none');
         });
     }
 
@@ -689,7 +589,6 @@
         selectCategory('all', 'Все события');
     }
 
-    // Бронебойный запуск календаря
     function initMyCalendar() {
         var calendarEl = document.getElementById('calendar');
         if (!calendarEl || window.calendarIsReady) return;
@@ -723,7 +622,7 @@
                     if (selectedEmp === 'no_managers') {
                         matchEmp = !managerNames.includes(props.full_name);
                     } else if (selectedEmp !== 'all') {
-                        matchEmp = (props.full_name === selectedEmp);
+                        matchEmp = (props.full_name === selectedEmp || props.full_name.includes(selectedEmp) || selectedEmp.includes(props.full_name));
                     }
                     const matchCat = (selectedCat === 'all') || (props.category === selectedCat);
                     if (!matchEmp || !matchCat) {
