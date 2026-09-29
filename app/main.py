@@ -215,6 +215,54 @@ def create_user(
         }
     )
 
+# Редактирование профиля (ФИО и логин)
+@app.post("/admin/users/edit")
+def edit_user(
+    request: Request,
+    user_id: int = Form(...),
+    full_name: str = Form(...),
+    username: str = Form(...),
+    user = Depends(get_current_user)
+):
+    if not user or user.role not in ["admin", "manager"]:
+        return RedirectResponse(url="/", status_code=303)
+    
+    db = SessionLocal()
+    target_user = db.query(User).filter(User.id == user_id).first()
+    if not target_user:
+        msg = "Пользователь не найден."
+        success = False
+    else:
+        new_username = username.strip()
+        existing = db.query(User).filter(User.username == new_username, User.id != user_id).first()
+        if existing:
+            msg = f"Логин @{new_username} уже занят другим пользователем."
+            success = False
+        else:
+            target_user.full_name = full_name.strip()
+            target_user.username = new_username
+            db.commit()
+            msg = f"Данные сотрудника {target_user.full_name} успешно обновлены."
+            success = True
+
+    all_emps_db = db.query(ScheduleEntry.employee_name).distinct().all()
+    managers_db = db.query(Manager).all()
+    users_list = db.query(User).all()
+    db.close()
+
+    response = templates.TemplateResponse(
+        request=request, name="admin.html", 
+        context={
+            "user": user, "msg": msg, "success": success, "tab": "users",
+            "all_employees": sorted(list(set([r[0] for r in all_emps_db if r[0]]))),
+            "managers_list": [m.employee_name for m in managers_db],
+            "users_list": users_list
+        }
+    )
+    if success and user.id == user_id:
+        response.set_cookie("user_session", target_user.username, httponly=True)
+    return response
+
 @app.post("/admin/users/toggle-block")
 def toggle_user_block(request: Request, user_id: int = Form(...), user = Depends(get_current_user)):
     if not user or user.role not in ["admin", "manager"]:
@@ -237,7 +285,6 @@ def toggle_user_block(request: Request, user_id: int = Form(...), user = Depends
             success = False
         db.close()
 
-    db = SessionLocal()
     all_emps_db = db.query(ScheduleEntry.employee_name).distinct().all()
     managers_db = db.query(Manager).all()
     users_list = db.query(User).all()
@@ -337,7 +384,6 @@ def delete_user(request: Request, user_id: int = Form(...), user = Depends(get_c
             success = False
         db.close()
 
-    db = SessionLocal()
     all_emps_db = db.query(ScheduleEntry.employee_name).distinct().all()
     managers_db = db.query(Manager).all()
     users_list = db.query(User).all()

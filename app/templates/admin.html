@@ -207,7 +207,7 @@
 </div>
 
 {% elif tab == 'users' and user.role in ['admin', 'manager'] %}
-<!-- ВКЛАДКА 2: ТАБЛИЦА ПОЛЬЗОВАТЕЛЕЙ НА ВСЮ ШИРИНУ БЕЗ ОБРЕЗАНИЙ -->
+<!-- ВКЛАДКА 2: ТАБЛИЦА ПОЛЬЗОВАТЕЛЕЙ НА ВСЮ ШИРИНУ -->
 <div class="ios-glass p-6 sm:p-7 rounded-[28px] w-full min-h-[380px] pb-32">
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
@@ -225,7 +225,6 @@
         </button>
     </div>
     
-    <!-- ТАБЛИЦА: СВОБОДНЫЙ OVERFLOW, НИКАКИХ СКРОЛЛБАРОВ И ОБРЕЗАНИЙ -->
     <div class="overflow-visible">
         <table class="w-full text-left text-xs">
             <thead>
@@ -240,10 +239,19 @@
                 {% for u in users_list %}
                 <tr class="hover:bg-black/5 dark:hover:bg-white/5 transition {% if not u.is_active %}opacity-70 bg-rose-500/5{% endif %}">
                     
-                    <!-- 1. Сотрудник / Логин -->
+                    <!-- 1. Сотрудник / Логин с аккуратной кнопкой-карандашиком слева -->
                     <td class="py-4 px-3">
-                        <div class="font-bold text-gray-900 dark:text-white leading-tight text-[13px]">{{ u.full_name }}</div>
-                        <div class="text-[11px] text-gray-400 font-mono mt-0.5">@{{ u.username }}</div>
+                        <div class="flex items-center gap-3">
+                            <button type="button" onclick="openEditUserModal('{{ u.id }}', '{{ u.full_name }}', '{{ u.username }}')"
+                                    class="w-7 h-7 rounded-xl bg-black/5 hover:bg-black/10 dark:bg-white/10 dark:hover:bg-white/20 border border-black/5 dark:border-white/10 flex items-center justify-center text-xs text-gray-600 dark:text-gray-300 transition active:scale-90 shadow-sm shrink-0 cursor-pointer"
+                                    title="Редактировать ФИО и логин">
+                                ✏️
+                            </button>
+                            <div class="min-w-0">
+                                <div class="font-bold text-gray-900 dark:text-white leading-tight text-[13px] truncate">{{ u.full_name }}</div>
+                                <div class="text-[11px] text-gray-400 font-mono mt-0.5">@{{ u.username }}</div>
+                            </div>
+                        </div>
                     </td>
 
                     <!-- 2. Статус (Активен / Заблокирован) -->
@@ -410,6 +418,44 @@
     </div>
 </div>
 
+<!-- МОДАЛЬНОЕ ОКНО РЕДАКТИРОВАНИЯ ПОЛЬЗОВАТЕЛЯ -->
+<div id="editUserModal" class="fixed inset-0 ios-modal-backdrop hidden items-center justify-center p-4 z-50">
+    <div class="ios-glass-card rounded-[32px] max-w-md w-full p-6 sm:p-7 animate-ios shadow-2xl">
+        <div class="flex justify-between items-start mb-5">
+            <div>
+                <p class="text-[11px] font-bold tracking-wider uppercase text-gray-400 mb-0.5">Управление профилем</p>
+                <h3 class="text-xl font-extrabold tracking-tight text-corp-red dark:text-red-400">Редактирование сотрудника</h3>
+            </div>
+            <button type="button" onclick="closeEditUserModal()" 
+                    class="w-8 h-8 rounded-full bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 flex items-center justify-center text-gray-600 dark:text-gray-300 font-bold text-sm transition active:scale-90">
+                ✕
+            </button>
+        </div>
+
+        <form method="post" action="/admin/users/edit" class="space-y-4 text-xs">
+            <input type="hidden" name="user_id" id="editUserId">
+
+            <div>
+                <label class="block font-semibold mb-1 opacity-75">ФИО сотрудника</label>
+                <input type="text" name="full_name" id="editFullName" required placeholder="Иванов Иван Иванович" 
+                       class="w-full bg-white/70 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-2xl px-4 py-2.5 text-xs outline-none focus:border-corp-red transition">
+            </div>
+
+            <div>
+                <label class="block font-semibold mb-1 opacity-75">Логин</label>
+                <input type="text" name="username" id="editUsername" required placeholder="ivan_i" 
+                       class="w-full bg-white/70 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-2xl px-4 py-2.5 text-xs outline-none focus:border-corp-red font-mono transition">
+            </div>
+
+            <div class="pt-2">
+                <button type="submit" class="w-full py-3 rounded-2xl bg-corp-red hover:bg-corp-dark text-white font-bold text-xs shadow-xl shadow-corp-red/25 transition active:scale-95 cursor-pointer">
+                    Сохранить изменения
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <form id="resetPwdForm" method="post" action="/admin/users/reset-password" class="hidden">
     <input type="hidden" name="user_id" id="resetUserId">
     <input type="hidden" name="new_password" id="resetNewPassword">
@@ -418,22 +464,29 @@
 <script>
     function openCreateUserModal() {
         const m = document.getElementById('createUserModal');
-        if (m) {
-            m.classList.remove('hidden');
-            m.classList.add('flex');
-        }
+        if (m) { m.classList.remove('hidden'); m.classList.add('flex'); }
     }
     function closeCreateUserModal() {
         const m = document.getElementById('createUserModal');
-        if (m) {
-            m.classList.add('hidden');
-            m.classList.remove('flex');
-        }
+        if (m) { m.classList.add('hidden'); m.classList.remove('flex'); }
     }
     document.getElementById('createUserModal').addEventListener('click', function(e) {
-        if (e.target === this) {
-            closeCreateUserModal();
-        }
+        if (e.target === this) closeCreateUserModal();
+    });
+
+    function openEditUserModal(id, fullName, username) {
+        document.getElementById('editUserId').value = id;
+        document.getElementById('editFullName').value = fullName;
+        document.getElementById('editUsername').value = username;
+        const m = document.getElementById('editUserModal');
+        if (m) { m.classList.remove('hidden'); m.classList.add('flex'); }
+    }
+    function closeEditUserModal() {
+        const m = document.getElementById('editUserModal');
+        if (m) { m.classList.add('hidden'); m.classList.remove('flex'); }
+    }
+    document.getElementById('editUserModal').addEventListener('click', function(e) {
+        if (e.target === this) closeEditUserModal();
     });
 
     function selectNewUserRole(val, label) {
