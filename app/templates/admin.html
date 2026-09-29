@@ -31,7 +31,7 @@
                 <input type="file" name="file" accept=".xlsx,.xlsm" required 
                        class="block w-full text-xs text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:bg-corp-red file:text-white hover:file:bg-corp-dark cursor-pointer transition">
                 <p class="text-xs text-gray-400">Форматы .xlsx и .xlsm.</p>
-                <button type="submit" class="w-full bg-corp-red hover:bg-corp-dark text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow transition active:scale-95 cursor-pointer">
+                <button type="submit" class="w-full bg-corp-red hover:bg-corp-dark text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow transition active:scale-95">
                     Обновить график
                 </button>
             </form>
@@ -39,7 +39,7 @@
 
         <div class="pt-5 mt-5 border-t border-black/5 dark:border-white/10">
             <form method="post" action="/admin/clear-schedule" onsubmit="return confirm('Вы уверены, что хотите полностью очистить график смен и дежурств?')">
-                <button type="submit" class="w-full bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/25 font-bold text-xs px-4 py-2.5 rounded-xl transition active:scale-95 flex items-center justify-center gap-2 cursor-pointer">
+                <button type="submit" class="w-full bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/25 font-bold text-xs px-4 py-2.5 rounded-xl transition active:scale-95 flex items-center justify-center gap-2">
                     <span>🗑️</span>
                     <span>Очистить график смен</span>
                 </button>
@@ -65,7 +65,7 @@
                     {% endfor %}
                 </div>
             </div>
-            <button type="submit" class="w-full bg-corp-red hover:bg-corp-dark text-white font-bold text-xs px-4 py-2 rounded-xl shadow transition active:scale-95 cursor-pointer">
+            <button type="submit" class="w-full bg-corp-red hover:bg-corp-dark text-white font-bold text-xs px-4 py-2 rounded-xl shadow transition active:scale-95">
                 Назначить руководителем
             </button>
         </form>
@@ -76,7 +76,7 @@
                 <span class="font-medium">{{ m }}</span>
                 <form method="post" action="/admin/delete-manager" class="inline">
                     <input type="hidden" name="employee_name" value="{{ m }}">
-                    <button type="submit" class="text-rose-600 hover:text-rose-800 dark:text-rose-400 font-bold px-1.5 py-0.5 rounded transition cursor-pointer">✕</button>
+                    <button type="submit" class="text-rose-600 hover:text-rose-800 dark:text-rose-400 font-bold px-1.5 py-0.5 rounded transition">✕</button>
                 </form>
             </div>
             {% endfor %}
@@ -199,7 +199,7 @@
                 </div>
             </div>
 
-            <button type="submit" class="w-full bg-corp-red hover:bg-corp-dark text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow transition active:scale-95 cursor-pointer">
+            <button type="submit" class="w-full bg-corp-red hover:bg-corp-dark text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow transition active:scale-95">
                 Сохранить запись
             </button>
         </form>
@@ -314,8 +314,8 @@
                     <td class="py-4 px-3 text-right whitespace-nowrap">
                         <div class="inline-flex items-center gap-2">
                             
-                            <!-- Сбросить пароль через красивое модальное окно -->
-                            <button type="button" onclick="openResetPasswordModal('{{ u.id }}', '{{ u.full_name }}')"
+                            <!-- Сбросить пароль -->
+                            <button type="button" onclick="promptResetPassword('{{ u.id }}', '{{ u.full_name }}')"
                                     class="px-3 py-1.5 rounded-xl bg-black/5 hover:bg-black/10 dark:bg-white/10 dark:hover:bg-white/15 text-gray-700 dark:text-gray-200 font-medium transition active:scale-95 flex items-center gap-1.5 cursor-pointer">
                                 <span>🔑</span>
                                 <span>Сбросить пароль</span>
@@ -368,7 +368,7 @@
                 <h3 class="text-xl font-extrabold tracking-tight text-corp-red dark:text-red-400">Новый пользователь</h3>
             </div>
             <button type="button" onclick="closeCreateUserModal()" 
-                    class="w-8 h-8 rounded-full bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 flex items-center justify-center text-gray-600 dark:text-gray-300 font-bold text-sm transition active:scale-90 cursor-pointer">
+                    class="w-8 h-8 rounded-full bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 flex items-center justify-center text-gray-600 dark:text-gray-300 font-bold text-sm transition active:scale-90">
                 ✕
             </button>
         </div>
@@ -427,7 +427,7 @@
                 <h3 class="text-xl font-extrabold tracking-tight text-corp-red dark:text-red-400">Редактирование сотрудника</h3>
             </div>
             <button type="button" onclick="closeEditUserModal()" 
-                    class="w-8 h-8 rounded-full bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 flex items-center justify-center text-gray-600 dark:text-gray-300 font-bold text-sm transition active:scale-90 cursor-pointer">
+                    class="w-8 h-8 rounded-full bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 flex items-center justify-center text-gray-600 dark:text-gray-300 font-bold text-sm transition active:scale-90">
                 ✕
             </button>
         </div>
@@ -456,61 +456,19 @@
     </div>
 </div>
 
-<!-- МОДАЛЬНОЕ ОКНО СБРОСА ПАРОЛЯ -->
-<div id="resetPasswordModal" class="fixed inset-0 ios-modal-backdrop hidden items-center justify-center p-4 z-50">
-    <div class="ios-glass-card rounded-[32px] max-w-md w-full p-6 sm:p-7 animate-ios shadow-2xl">
-        <div class="flex justify-between items-start mb-5">
-            <div>
-                <p class="text-[11px] font-bold tracking-wider uppercase text-gray-400 mb-0.5">Безопасность учетной записи</p>
-                <h3 class="text-xl font-extrabold tracking-tight text-corp-red dark:text-red-400">Сброс пароля</h3>
-            </div>
-            <button type="button" onclick="closeResetPasswordModal()" 
-                    class="w-8 h-8 rounded-full bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 flex items-center justify-center text-gray-600 dark:text-gray-300 font-bold text-sm transition active:scale-90 cursor-pointer">
-                ✕
-            </button>
-        </div>
-
-        <form method="post" action="/admin/users/reset-password" class="space-y-4 text-xs">
-            <input type="hidden" name="user_id" id="modalResetUserId">
-
-            <div class="p-3 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10">
-                <div class="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-0.5">Сотрудник</div>
-                <div id="modalResetFullName" class="font-bold text-gray-900 dark:text-white text-sm"></div>
-            </div>
-
-            <div>
-                <label class="block font-semibold mb-1 opacity-75">Новый временный пароль</label>
-                <input type="text" name="new_password" id="modalResetPasswordInput" required minlength="4" value="123456" 
-                       class="w-full bg-white/70 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-2xl px-4 py-2.5 text-xs outline-none focus:border-corp-red font-mono transition">
-                <p class="text-[11px] text-gray-400 mt-1.5 ml-1">Минимум 4 символа. Позже пользователь сможет сменить его самостоятельно.</p>
-            </div>
-
-            <div class="pt-2">
-                <button type="submit" class="w-full py-3 rounded-2xl bg-corp-red hover:bg-corp-dark text-white font-bold text-xs shadow-xl shadow-corp-red/25 transition active:scale-95 cursor-pointer">
-                    Обновить пароль
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
+<form id="resetPwdForm" method="post" action="/admin/users/reset-password" class="hidden">
+    <input type="hidden" name="user_id" id="resetUserId">
+    <input type="hidden" name="new_password" id="resetNewPassword">
+</form>
 
 <script>
-    function clearFocus() {
-        if (document.activeElement && typeof document.activeElement.blur === 'function') {
-            document.activeElement.blur();
-        }
-    }
-
     function openCreateUserModal() {
         const m = document.getElementById('createUserModal');
         if (m) { m.classList.remove('hidden'); m.classList.add('flex'); }
-        document.body.classList.add('overflow-hidden');
     }
     function closeCreateUserModal() {
-        clearFocus();
         const m = document.getElementById('createUserModal');
         if (m) { m.classList.add('hidden'); m.classList.remove('flex'); }
-        checkBodyScroll();
     }
     document.getElementById('createUserModal').addEventListener('click', function(e) {
         if (e.target === this) closeCreateUserModal();
@@ -522,56 +480,13 @@
         document.getElementById('editUsername').value = username;
         const m = document.getElementById('editUserModal');
         if (m) { m.classList.remove('hidden'); m.classList.add('flex'); }
-        document.body.classList.add('overflow-hidden');
     }
     function closeEditUserModal() {
-        clearFocus();
         const m = document.getElementById('editUserModal');
         if (m) { m.classList.add('hidden'); m.classList.remove('flex'); }
-        checkBodyScroll();
     }
     document.getElementById('editUserModal').addEventListener('click', function(e) {
         if (e.target === this) closeEditUserModal();
-    });
-
-    function openResetPasswordModal(id, fullName) {
-        document.getElementById('modalResetUserId').value = id;
-        document.getElementById('modalResetFullName').innerText = fullName;
-        document.getElementById('modalResetPasswordInput').value = '123456';
-        const m = document.getElementById('resetPasswordModal');
-        if (m) { m.classList.remove('hidden'); m.classList.add('flex'); }
-        document.body.classList.add('overflow-hidden');
-    }
-    function closeResetPasswordModal() {
-        clearFocus();
-        const m = document.getElementById('resetPasswordModal');
-        if (m) { m.classList.add('hidden'); m.classList.remove('flex'); }
-        checkBodyScroll();
-    }
-    document.getElementById('resetPasswordModal').addEventListener('click', function(e) {
-        if (e.target === this) closeResetPasswordModal();
-    });
-
-    function checkBodyScroll() {
-        const anyModalOpen = document.querySelectorAll('#createUserModal:not(.hidden), #editUserModal:not(.hidden), #resetPasswordModal:not(.hidden)').length > 0;
-        if (!anyModalOpen) {
-            document.body.classList.remove('overflow-hidden');
-        }
-    }
-
-    /* ЗАКРЫТИЕ ПО ESC И СНЯТИЕ ВСЕХ ФОКУСОВ */
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            clearFocus();
-            closeCreateUserModal();
-            closeEditUserModal();
-            closeResetPasswordModal();
-            document.querySelectorAll('.ios-dropdown-menu').forEach(m => {
-                m.classList.add('hidden');
-                const parentRow = m.closest('tr');
-                if (parentRow) parentRow.classList.remove('relative', 'z-30');
-            });
-        }
     });
 
     function selectNewUserRole(val, label) {
@@ -584,19 +499,21 @@
         document.getElementById('valRole_' + userId).value = newRole;
         document.getElementById('formRole_' + userId).submit();
     }
+
+    function promptResetPassword(userId, userName) {
+        const newPwd = prompt(`Введите новый пароль для сотрудника ${userName}:`, '123456');
+        if (newPwd && newPwd.trim().length >= 4) {
+            document.getElementById('resetUserId').value = userId;
+            document.getElementById('resetNewPassword').value = newPwd.trim();
+            document.getElementById('resetPwdForm').submit();
+        } else if (newPwd !== null) {
+            alert('Пароль должен содержать минимум 4 символа!');
+        }
+    }
 </script>
 {% endif %}
 
 <style>
-    /* ОТКЛЮЧЕНИЕ СИСТЕМНОЙ БЕЛОЙ ОБВОДКИ КНОПОК ПРИ ФОКУСЕ */
-    button:focus,
-    button:focus-visible,
-    button:active {
-        outline: none !important;
-        box-shadow: none !important;
-        -webkit-tap-highlight-color: transparent !important;
-    }
-
     .ios-inner-scroll {
         overflow-y: auto;
         scrollbar-width: thin;
