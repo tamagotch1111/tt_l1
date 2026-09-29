@@ -14,6 +14,12 @@ app = FastAPI(title="Duty Calendar")
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 templates = Jinja2Templates(directory="app/templates")
 
+def get_users_list_sorted(db):
+    """Сортировка: Администратор (0) -> Руководитель (1) -> Сотрудник (2), внутри — по алфавиту"""
+    role_order = {"admin": 0, "manager": 1, "employee": 2}
+    users = db.query(User).all()
+    return sorted(users, key=lambda u: (role_order.get(u.role, 99), (u.full_name or "").strip().lower()))
+
 @app.on_event("startup")
 def startup():
     init_db()
@@ -152,7 +158,7 @@ def admin_page(request: Request, tab: str = "schedule", user = Depends(get_curre
     db = SessionLocal()
     all_emps_db = db.query(ScheduleEntry.employee_name).distinct().all()
     managers_db = db.query(Manager).all()
-    users_list = db.query(User).all()
+    users_list = get_users_list_sorted(db)
     db.close()
 
     all_employees = sorted(list(set([row[0] for row in all_emps_db if row[0]])))
@@ -202,7 +208,7 @@ def create_user(
 
     all_emps_db = db.query(ScheduleEntry.employee_name).distinct().all()
     managers_db = db.query(Manager).all()
-    users_list = db.query(User).all()
+    users_list = get_users_list_sorted(db)
     db.close()
 
     return templates.TemplateResponse(
@@ -215,7 +221,6 @@ def create_user(
         }
     )
 
-# Редактирование профиля (ФИО и логин)
 @app.post("/admin/users/edit")
 def edit_user(
     request: Request,
@@ -247,7 +252,7 @@ def edit_user(
 
     all_emps_db = db.query(ScheduleEntry.employee_name).distinct().all()
     managers_db = db.query(Manager).all()
-    users_list = db.query(User).all()
+    users_list = get_users_list_sorted(db)
     db.close()
 
     response = templates.TemplateResponse(
@@ -285,9 +290,10 @@ def toggle_user_block(request: Request, user_id: int = Form(...), user = Depends
             success = False
         db.close()
 
+    db = SessionLocal()
     all_emps_db = db.query(ScheduleEntry.employee_name).distinct().all()
     managers_db = db.query(Manager).all()
-    users_list = db.query(User).all()
+    users_list = get_users_list_sorted(db)
     db.close()
 
     return templates.TemplateResponse(
@@ -321,7 +327,7 @@ def update_user_role(request: Request, user_id: int = Form(...), new_role: str =
 
     all_emps_db = db.query(ScheduleEntry.employee_name).distinct().all()
     managers_db = db.query(Manager).all()
-    users_list = db.query(User).all()
+    users_list = get_users_list_sorted(db)
     db.close()
 
     return templates.TemplateResponse(
@@ -351,7 +357,7 @@ def reset_user_password(request: Request, user_id: int = Form(...), new_password
 
     all_emps_db = db.query(ScheduleEntry.employee_name).distinct().all()
     managers_db = db.query(Manager).all()
-    users_list = db.query(User).all()
+    users_list = get_users_list_sorted(db)
     db.close()
 
     return templates.TemplateResponse(
@@ -384,9 +390,10 @@ def delete_user(request: Request, user_id: int = Form(...), user = Depends(get_c
             success = False
         db.close()
 
+    db = SessionLocal()
     all_emps_db = db.query(ScheduleEntry.employee_name).distinct().all()
     managers_db = db.query(Manager).all()
-    users_list = db.query(User).all()
+    users_list = get_users_list_sorted(db)
     db.close()
 
     return templates.TemplateResponse(
@@ -417,7 +424,7 @@ def clear_schedule(request: Request, user = Depends(get_current_user)):
 
     all_emps_db = db.query(ScheduleEntry.employee_name).distinct().all()
     managers_db = db.query(Manager).all()
-    users_list = db.query(User).all()
+    users_list = get_users_list_sorted(db)
     db.close()
 
     return templates.TemplateResponse(
@@ -446,7 +453,7 @@ def add_manager(request: Request, employee_name: str = Form(...), user = Depends
     
     all_emps_db = db.query(ScheduleEntry.employee_name).distinct().all()
     managers_db = db.query(Manager).all()
-    users_list = db.query(User).all()
+    users_list = get_users_list_sorted(db)
     db.close()
 
     return templates.TemplateResponse(
@@ -476,7 +483,7 @@ def delete_manager(request: Request, employee_name: str = Form(...), user = Depe
 
     all_emps_db = db.query(ScheduleEntry.employee_name).distinct().all()
     managers_db = db.query(Manager).all()
-    users_list = db.query(User).all()
+    users_list = get_users_list_sorted(db)
     db.close()
 
     return templates.TemplateResponse(
@@ -537,7 +544,7 @@ def add_entry(
     
     all_emps_db = db.query(ScheduleEntry.employee_name).distinct().all()
     managers_db = db.query(Manager).all()
-    users_list = db.query(User).all()
+    users_list = get_users_list_sorted(db)
     db.close()
 
     return templates.TemplateResponse(
@@ -770,7 +777,7 @@ async def upload_excel(request: Request, file: UploadFile = File(...), user = De
     db = SessionLocal()
     all_emps_db = db.query(ScheduleEntry.employee_name).distinct().all()
     managers_db = db.query(Manager).all()
-    users_list = db.query(User).all()
+    users_list = get_users_list_sorted(db)
     db.close()
 
     return templates.TemplateResponse(
