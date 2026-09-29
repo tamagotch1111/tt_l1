@@ -33,8 +33,17 @@
     </style>
 </head>
 <body class="h-full flex items-center justify-center p-4 text-white">
-    <div class="ios-glass-card rounded-[32px] p-8 max-w-sm w-full transition-all shadow-2xl">
-        <div class="text-center mb-8">
+    <div class="ios-glass-card rounded-[32px] p-8 max-w-sm w-full transition-all shadow-2xl relative overflow-hidden">
+        
+        <!-- Официальный фирменный знак MOEX со ступенькой -->
+        <div class="absolute top-5 right-5 opacity-40 hover:opacity-90 transition-opacity duration-300 select-none cursor-default" title="Московская биржа">
+            <svg class="h-6 w-auto shrink-0 drop-shadow-sm" viewBox="0 0 100 86" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M0 34H35V0H100V86H0Z" fill="#EE1C25"/>
+                <text x="50" y="70" text-anchor="middle" fill="#FFFFFF" font-family="'Arial Black', Arial, -apple-system, sans-serif" font-weight="900" font-size="28" letter-spacing="-0.5">MOEX</text>
+            </svg>
+        </div>
+
+        <div class="text-center mb-8 pt-1">
             <div class="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-corp-red mb-3 shadow-lg shadow-corp-red/40">
                 <span class="text-xl">📅</span>
             </div>
@@ -61,7 +70,7 @@
                        class="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-xs text-white placeholder-gray-500 outline-none focus:border-corp-red transition">
             </div>
 
-            <button type="submit" class="w-full mt-2 py-3.5 rounded-2xl bg-corp-red hover:bg-corp-dark text-white font-extrabold text-xs shadow-xl shadow-corp-red/30 transition active:scale-95">
+            <button type="submit" class="w-full mt-2 py-3.5 rounded-2xl bg-corp-red hover:bg-corp-dark text-white font-extrabold text-xs shadow-xl shadow-corp-red/30 transition active:scale-95 cursor-pointer">
                 Войти в систему
             </button>
         </form>

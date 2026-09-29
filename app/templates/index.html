@@ -204,10 +204,20 @@
         background: rgba(255, 255, 255, 0.05);
         border: 1px solid rgba(255, 255, 255, 0.08);
     }
+
+    /* ИЗОЛЯЦИЯ ПРОКРУТКИ В МОДАЛЬНОМ ОКНЕ */
+    .ios-modal-backdrop {
+        background: rgba(0, 0, 0, 0.55);
+        backdrop-filter: blur(20px) saturate(130%);
+        -webkit-backdrop-filter: blur(20px) saturate(130%);
+        overscroll-behavior: contain;
+    }
+
     .ios-scroll-fade {
         overflow-y: auto;
         scrollbar-width: thin;
         scrollbar-color: rgba(0, 0, 0, 0.22) transparent;
+        overscroll-behavior: contain;
         mask-image: linear-gradient(to bottom, transparent 0px, black 24px, black calc(100% - 28px), transparent 100%);
         -webkit-mask-image: linear-gradient(to bottom, transparent 0px, black 24px, black calc(100% - 28px), transparent 100%);
     }
@@ -346,12 +356,11 @@
         </div>
     </div>
 
-    <!-- ПАНЕЛЬ ФИЛЬТРОВ С КНОПКОЙ "МОИ СМЕНЫ" -->
-    <div class="mb-5 p-3.5 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 flex flex-wrap items-center gap-3 relative z-30">
+    <!-- ПАНЕЛЬ ФИЛЬТРОВ -->
+    <div class="mb-5 p-3.5 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 flex flex-wrap items-center gap-3 relative z-30">
         
-        <!-- Быстрая кнопка "Мои смены" -->
         <button onclick="selectMyShifts()" 
-                class="px-3 py-2 rounded-xl bg-corp-red hover:bg-corp-dark text-white text-xs font-bold transition active:scale-95 flex items-center gap-1.5 shadow-md shadow-corp-red/20">
+                class="px-3 py-2 rounded-xl bg-corp-red hover:bg-corp-dark text-white text-xs font-bold transition active:scale-95 flex items-center gap-1.5 shadow-md shadow-corp-red/20 cursor-pointer">
             <span>⚡</span>
             <span>Мои смены</span>
         </button>
@@ -392,7 +401,7 @@
         </div>
 
         <button onclick="resetCalendarFilters()" 
-                class="ml-auto text-xs px-3 py-2 rounded-xl bg-black/5 hover:bg-black/10 dark:bg-white/10 dark:hover:bg-white/15 text-gray-700 dark:text-gray-200 font-medium transition active:scale-95">
+                class="ml-auto text-xs px-3 py-2 rounded-xl bg-black/5 hover:bg-black/10 dark:bg-white/10 dark:hover:bg-white/15 text-gray-700 dark:text-gray-200 font-medium transition active:scale-95 cursor-pointer">
             ✕ Сбросить
         </button>
     </div>
@@ -402,19 +411,23 @@
 
 <!-- МОДАЛЬНОЕ ОКНО ДНЯ -->
 <div id="dayModal" class="fixed inset-0 ios-modal-backdrop hidden items-center justify-center p-4 z-50">
-    <div class="ios-glass-card rounded-[32px] max-w-md w-full flex flex-col max-h-[82vh] overflow-hidden animate-ios">
+    <div class="ios-glass-card rounded-[32px] max-w-md w-full flex flex-col max-h-[82vh] overflow-hidden animate-ios shadow-2xl">
         <div class="px-6 pt-7 pb-3 flex justify-between items-start shrink-0 z-20">
             <div>
                 <p class="text-[11px] font-bold tracking-wider uppercase text-gray-400 mb-0.5">Расписание на день</p>
                 <h3 id="modalTitle" class="text-2xl font-extrabold tracking-tight text-corp-red dark:text-red-400">График</h3>
             </div>
-            <button onclick="closeDayModal()" class="w-8 h-8 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center text-gray-600 dark:text-gray-300 font-bold text-sm">✕</button>
+            <button onclick="closeDayModal()" class="w-8 h-8 rounded-full bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 flex items-center justify-center text-gray-600 dark:text-gray-300 font-bold text-sm transition active:scale-90 cursor-pointer">
+                ✕
+            </button>
         </div>
         <div class="px-6 py-2 ios-scroll-fade flex-grow space-y-4">
             <div id="modalContent" class="space-y-4 pt-1 pb-4"></div>
         </div>
         <div class="px-6 pt-2 pb-6 shrink-0 text-center z-20">
-            <button onclick="closeDayModal()" class="w-full py-3 rounded-2xl bg-corp-red hover:bg-corp-dark text-white font-bold text-sm shadow-xl transition active:scale-95">Готово</button>
+            <button onclick="closeDayModal()" class="w-full py-3 rounded-2xl bg-corp-red hover:bg-corp-dark text-white font-bold text-sm shadow-xl transition active:scale-95 cursor-pointer">
+                Готово
+            </button>
         </div>
     </div>
 </div>
@@ -456,14 +469,20 @@
         applyCalendarFilters();
     }
 
+    // БЛОКИРОВКА И РАЗБЛОКИРОВКА СКРОЛЛА СТРАНИЦЫ
     function closeDayModal() {
         const modal = document.getElementById('dayModal');
         modal.classList.add('hidden');
         modal.classList.remove('flex');
+        document.body.classList.remove('overflow-hidden');
     }
 
     document.getElementById('dayModal').addEventListener('click', function(e) {
         if (e.target === this) closeDayModal();
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeDayModal();
     });
 
     function renderShiftBadge(shiftStr) {
@@ -555,6 +574,7 @@
                 const modal = document.getElementById('dayModal');
                 modal.classList.remove('hidden');
                 modal.classList.add('flex');
+                document.body.classList.add('overflow-hidden');
             });
     }
 
@@ -575,7 +595,6 @@
             if (selectedEmp === 'no_managers') {
                 matchEmp = !managerNames.includes(props.full_name);
             } else if (selectedEmp !== 'all') {
-                // Сравнение по полному имени или фамилии
                 matchEmp = (props.full_name === selectedEmp || props.full_name.includes(selectedEmp) || selectedEmp.includes(props.full_name));
             }
 
