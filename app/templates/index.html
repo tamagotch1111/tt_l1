@@ -11,6 +11,54 @@
         --fc-today-bg-color: transparent !important;
     }
 
+    /* ИСПРАВЛЕНИЕ КНОПОК НАВИГАЦИИ < И > */
+    .fc .fc-button-group {
+        display: inline-flex !important;
+        gap: 8px !important;
+    }
+    .fc .fc-button-group > .fc-button {
+        margin: 0 !important;
+        border-radius: 12px !important;
+        outline: none !important;
+        box-shadow: none !important;
+        width: 34px !important;
+        height: 34px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 0 !important;
+        background: rgba(0, 0, 0, 0.05) !important;
+        border: 1px solid rgba(0, 0, 0, 0.08) !important;
+        color: #334155 !important;
+        transition: all 0.15s ease !important;
+    }
+    .dark .fc .fc-button-group > .fc-button {
+        background: rgba(255, 255, 255, 0.06) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        color: #f1f5f9 !important;
+    }
+    .fc .fc-button-group > .fc-button:hover {
+        background: rgba(0, 0, 0, 0.1) !important;
+        transform: scale(1.03);
+    }
+    .dark .fc .fc-button-group > .fc-button:hover {
+        background: rgba(255, 255, 255, 0.14) !important;
+        transform: scale(1.03);
+    }
+    .fc .fc-button-group > .fc-button:active {
+        transform: scale(0.95);
+        background: #c8102e !important;
+        border-color: #c8102e !important;
+        color: #ffffff !important;
+    }
+    .fc .fc-button:focus,
+    .fc .fc-button:active,
+    .fc .fc-button-primary:focus,
+    .fc .fc-button-primary:not(:disabled):active {
+        outline: none !important;
+        box-shadow: none !important;
+    }
+
     .fc-daygrid-event-harness {
         margin: 0 !important;
         padding: 2px 1px !important;
@@ -146,18 +194,6 @@
         box-shadow: 0 0 10px rgba(200, 16, 46, 0.6) !important;
     }
 
-    .dark .fc-button {
-        background: rgba(255, 255, 255, 0.08) !important;
-        border: 1px solid rgba(255, 255, 255, 0.12) !important;
-        color: #f1f5f9 !important;
-        border-radius: 12px !important;
-    }
-    .dark .fc-button-active {
-        background: #c8102e !important;
-        border-color: #c8102e !important;
-        color: #ffffff !important;
-    }
-
     .ios-inner-scroll {
         overflow-y: auto;
         scrollbar-width: thin;
@@ -205,7 +241,6 @@
         border: 1px solid rgba(255, 255, 255, 0.08);
     }
 
-    /* ИЗОЛЯЦИЯ ПРОКРУТКИ В МОДАЛЬНОМ ОКНЕ */
     .ios-modal-backdrop {
         background: rgba(0, 0, 0, 0.55);
         backdrop-filter: blur(20px) saturate(130%);
@@ -469,7 +504,6 @@
         applyCalendarFilters();
     }
 
-    // БЛОКИРОВКА И РАЗБЛОКИРОВКА СКРОЛЛА СТРАНИЦЫ
     function closeDayModal() {
         const modal = document.getElementById('dayModal');
         modal.classList.add('hidden');
@@ -622,7 +656,7 @@
             locale: 'ru',
             height: 'auto',
             headerToolbar: {
-                left: 'prev,next today',
+                left: 'prev,next',
                 center: 'title',
                 right: ''
             },

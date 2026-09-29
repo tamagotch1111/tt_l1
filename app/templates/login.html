@@ -12,18 +12,45 @@
         }
         if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+        function toggleDark() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.theme = 'light';
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.theme = 'dark';
+            }
         }
     </script>
     <style>
         body {
-            background-color: #0c0c0e;
+            background-color: #f4f4f8;
             background-image: 
-                radial-gradient(at 15% 20%, rgba(200, 16, 46, 0.22) 0px, transparent 55%),
-                radial-gradient(at 85% 15%, rgba(2, 132, 199, 0.16) 0px, transparent 50%),
-                radial-gradient(at 50% 85%, rgba(124, 58, 237, 0.18) 0px, transparent 60%);
+                radial-gradient(at 15% 15%, rgba(200, 16, 46, 0.11) 0px, transparent 55%),
+                radial-gradient(at 85% 10%, rgba(2, 132, 199, 0.09) 0px, transparent 50%),
+                radial-gradient(at 50% 95%, rgba(124, 58, 237, 0.08) 0px, transparent 60%);
             background-attachment: fixed;
         }
+        .dark body {
+            background-color: #0c0c0e;
+            background-image: 
+                radial-gradient(at 10% 20%, rgba(200, 16, 46, 0.15) 0px, transparent 50%),
+                radial-gradient(at 90% 10%, rgba(2, 132, 199, 0.12) 0px, transparent 50%),
+                radial-gradient(at 50% 90%, rgba(124, 58, 237, 0.12) 0px, transparent 50%);
+            background-attachment: fixed;
+        }
+
         .ios-glass-card {
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(35px) saturate(190%);
+            -webkit-backdrop-filter: blur(35px) saturate(190%);
+            border: 1px solid rgba(255, 255, 255, 0.85);
+            box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.12), 0 0 1px 1px rgba(255, 255, 255, 0.9) inset;
+        }
+        .dark .ios-glass-card {
             background: rgba(26, 26, 32, 0.75);
             backdrop-filter: blur(35px) saturate(190%);
             -webkit-backdrop-filter: blur(35px) saturate(190%);
@@ -32,45 +59,50 @@
         }
     </style>
 </head>
-<body class="h-full flex items-center justify-center p-4 text-white">
-    <div class="ios-glass-card rounded-[32px] p-8 max-w-sm w-full transition-all shadow-2xl relative overflow-hidden">
-        
-        <!-- Официальный фирменный знак MOEX со ступенькой -->
-        <div class="absolute top-5 right-5 opacity-40 hover:opacity-90 transition-opacity duration-300 select-none cursor-default" title="Московская биржа">
-            <svg class="h-6 w-auto shrink-0 drop-shadow-sm" viewBox="0 0 100 86" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M0 34H35V0H100V86H0Z" fill="#EE1C25"/>
-                <text x="50" y="70" text-anchor="middle" fill="#FFFFFF" font-family="'Arial Black', Arial, -apple-system, sans-serif" font-weight="900" font-size="28" letter-spacing="-0.5">MOEX</text>
-            </svg>
-        </div>
+<body class="h-full flex items-center justify-center p-4 text-gray-900 dark:text-white transition-colors duration-300">
+    
+    <!-- Переключатель темы в правом верхнем углу -->
+    <div class="fixed top-5 right-5 z-20">
+        <button type="button" onclick="toggleDark()" 
+                class="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white/70 dark:bg-white/10 hover:bg-white dark:hover:bg-white/20 text-gray-800 dark:text-gray-100 border border-black/10 dark:border-white/15 backdrop-blur-md transition active:scale-95 shadow-sm cursor-pointer select-none">
+            🌓 Тема
+        </button>
+    </div>
 
-        <div class="text-center mb-8 pt-1">
-            <div class="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-corp-red mb-3 shadow-lg shadow-corp-red/40">
-                <span class="text-xl">📅</span>
+    <div class="ios-glass-card rounded-[32px] p-8 max-w-sm w-full transition-all relative overflow-hidden">
+        
+        <div class="text-center mb-7 pt-1">
+            <!-- Логотип MOEX с мягкой аккуратной тенью -->
+            <div class="inline-flex items-center justify-center mb-4 select-none">
+                <svg class="h-11 w-auto drop-shadow-[0_4px_10px_rgba(238,28,37,0.22)]" viewBox="0 0 100 86" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M0 34H35V0H100V86H0Z" fill="#EE1C25"/>
+                    <text x="50" y="70" text-anchor="middle" fill="#FFFFFF" font-family="'Arial Black', Arial, -apple-system, sans-serif" font-weight="900" font-size="28" letter-spacing="-0.5">MOEX</text>
+                </svg>
             </div>
-            <h1 class="text-xl font-extrabold tracking-tight">График Внутренняя L1</h1>
-            <p class="text-xs text-gray-400 mt-1">Авторизуйтесь для доступа к расписанию</p>
+            <h1 class="text-xl font-extrabold tracking-tight text-gray-900 dark:text-white">График Внутренняя L1</h1>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Авторизуйтесь для доступа к расписанию</p>
         </div>
 
         {% if error %}
-        <div class="mb-5 p-3 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-400 text-xs font-semibold text-center">
+        <div class="mb-5 p-3 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-600 dark:text-rose-400 text-xs font-semibold text-center">
             {{ error }}
         </div>
         {% endif %}
 
         <form method="post" action="/login" class="space-y-4">
             <div>
-                <label class="block text-xs font-semibold text-gray-300 mb-1.5 ml-1">Логин</label>
+                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5 ml-1">Логин</label>
                 <input type="text" name="username" required autofocus placeholder="Ваш логин"
-                       class="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-xs text-white placeholder-gray-500 outline-none focus:border-corp-red transition">
+                       class="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-2xl px-4 py-3 text-xs text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none focus:border-corp-red transition">
             </div>
 
             <div>
-                <label class="block text-xs font-semibold text-gray-300 mb-1.5 ml-1">Пароль</label>
+                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5 ml-1">Пароль</label>
                 <input type="password" name="password" required placeholder="••••••••"
-                       class="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-xs text-white placeholder-gray-500 outline-none focus:border-corp-red transition">
+                       class="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-2xl px-4 py-3 text-xs text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none focus:border-corp-red transition">
             </div>
 
-            <button type="submit" class="w-full mt-2 py-3.5 rounded-2xl bg-corp-red hover:bg-corp-dark text-white font-extrabold text-xs shadow-xl shadow-corp-red/30 transition active:scale-95 cursor-pointer">
+            <button type="submit" class="w-full mt-2 py-3.5 rounded-2xl bg-corp-red hover:bg-corp-dark text-white font-extrabold text-xs shadow-xl shadow-corp-red/25 transition active:scale-95 cursor-pointer">
                 Войти в систему
             </button>
         </form>
