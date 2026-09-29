@@ -1,10 +1,16 @@
+version: '3.8'
+
 services:
   web:
     build: .
-    container_name: duty_calendar_app
-    restart: always
+    container_name: duty_calendar
     ports:
       - "8000:8000"
     volumes:
-      - ./calendar.db:/app/calendar.db
-      - ./app:/app/app
+      - duty_data:/app/data
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  duty_data:

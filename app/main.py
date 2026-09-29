@@ -1,18 +1,33 @@
+import os
+import shutil
 from fastapi import FastAPI, Depends, Request, Form, UploadFile, File, Response
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from datetime import date, datetime, timedelta
 from collections import defaultdict
-import shutil, os
+
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 from app.database import init_db, SessionLocal, ScheduleEntry, DutyAssignment, User, Manager
-from app.auth import get_current_user, hash_password
+from app.auth import get_current_user, hash_password, verify_password
 from app.excel_parser import parse_schedule_excel
 
+# Настройка Rate Limiting (Защита от брутфорса)
+limiter = Limiter(key_func=get_remote_address)
 app = FastAPI(title="Duty Calendar")
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 templates = Jinja2Templates(directory="app/templates")
+
+def get_users_list_sorted(db):
+    role_order = {"admin": 0, "manager": 1, "employee": 2}
+    users = db.query(User).all()
+    return sorted(users, key=lambda u: (role_order.get(u.role, 99), (u.full_name or "").strip().lower()))
 
 @app.on_event("startup")
 def startup():
@@ -27,7 +42,7 @@ def startup():
     
     user_test = db.query(User).filter(User.username == "user").first()
     if not user_test:
-        db.add(User(username="user", password_hash=hash_password("user123"), full_name="Красавин Артем", role="employee", is_active=True))
+        db.add(User(username="user", password_hash=hash_password("user123"), full_name="Сотрудник", role="employee", is_active=True))
     
     db.commit()
     db.close()
@@ -37,17 +52,21 @@ def login_page(request: Request):
     return templates.TemplateResponse(request=request, name="login.html", context={"error": None})
 
 @app.post("/login")
-def login_submit(response: Response, request: Request, username: str = Form(...), password: str = Form(...)):
+@limiter.limit("10/minute") # Защита от перебора паролей
+def login_submit(request: Request, response: Response, username: str = Form(...), password: str = Form(...)):
     db = SessionLocal()
     user = db.query(User).filter(User.username == username.strip()).first()
     db.close()
-    if not user or user.password_hash != hash_password(password):
+    
+    # Сравниваем хеши паролей безопасно
+    if not user or not verify_password(password, user.password_hash):
         return templates.TemplateResponse(request=request, name="login.html", context={"error": "Неверный логин или пароль"})
     if not getattr(user, "is_active", True):
         return templates.TemplateResponse(request=request, name="login.html", context={"error": "Учетная запись заблокирована администратором"})
     
     res = RedirectResponse(url="/", status_code=303)
-    res.set_cookie("user_session", user.username, httponly=True)
+    # Выдаем безопасные куки (HttpOnly + Secure + SameSite)
+    res.set_cookie("user_session", user.username, httponly=True, secure=True, samesite="lax")
     return res
 
 @app.get("/logout")
@@ -57,10 +76,11 @@ def logout():
     return res
 
 @app.post("/api/change-password")
+@limiter.limit("5/minute")
 def change_password(request: Request, old_password: str = Form(...), new_password: str = Form(...), user = Depends(get_current_user)):
     if not user:
         return JSONResponse({"success": False, "error": "Не авторизован"}, status_code=401)
-    if user.password_hash != hash_password(old_password):
+    if not verify_password(old_password, user.password_hash):
         return JSONResponse({"success": False, "error": "Текущий пароль введен неверно"})
     if len(new_password) < 4:
         return JSONResponse({"success": False, "error": "Новый пароль слишком короткий (минимум 4 символа)"})
@@ -152,7 +172,7 @@ def admin_page(request: Request, tab: str = "schedule", user = Depends(get_curre
     db = SessionLocal()
     all_emps_db = db.query(ScheduleEntry.employee_name).distinct().all()
     managers_db = db.query(Manager).all()
-    users_list = db.query(User).all()
+    users_list = get_users_list_sorted(db)
     db.close()
 
     all_employees = sorted(list(set([row[0] for row in all_emps_db if row[0]])))
@@ -202,7 +222,7 @@ def create_user(
 
     all_emps_db = db.query(ScheduleEntry.employee_name).distinct().all()
     managers_db = db.query(Manager).all()
-    users_list = db.query(User).all()
+    users_list = get_users_list_sorted(db)
     db.close()
 
     return templates.TemplateResponse(
@@ -215,7 +235,6 @@ def create_user(
         }
     )
 
-# Редактирование профиля (ФИО и логин)
 @app.post("/admin/users/edit")
 def edit_user(
     request: Request,
@@ -247,7 +266,7 @@ def edit_user(
 
     all_emps_db = db.query(ScheduleEntry.employee_name).distinct().all()
     managers_db = db.query(Manager).all()
-    users_list = db.query(User).all()
+    users_list = get_users_list_sorted(db)
     db.close()
 
     response = templates.TemplateResponse(
@@ -260,7 +279,7 @@ def edit_user(
         }
     )
     if success and user.id == user_id:
-        response.set_cookie("user_session", target_user.username, httponly=True)
+        response.set_cookie("user_session", target_user.username, httponly=True, secure=True, samesite="lax")
     return response
 
 @app.post("/admin/users/toggle-block")
@@ -285,9 +304,10 @@ def toggle_user_block(request: Request, user_id: int = Form(...), user = Depends
             success = False
         db.close()
 
+    db = SessionLocal()
     all_emps_db = db.query(ScheduleEntry.employee_name).distinct().all()
     managers_db = db.query(Manager).all()
-    users_list = db.query(User).all()
+    users_list = get_users_list_sorted(db)
     db.close()
 
     return templates.TemplateResponse(
@@ -321,7 +341,7 @@ def update_user_role(request: Request, user_id: int = Form(...), new_role: str =
 
     all_emps_db = db.query(ScheduleEntry.employee_name).distinct().all()
     managers_db = db.query(Manager).all()
-    users_list = db.query(User).all()
+    users_list = get_users_list_sorted(db)
     db.close()
 
     return templates.TemplateResponse(
@@ -351,7 +371,7 @@ def reset_user_password(request: Request, user_id: int = Form(...), new_password
 
     all_emps_db = db.query(ScheduleEntry.employee_name).distinct().all()
     managers_db = db.query(Manager).all()
-    users_list = db.query(User).all()
+    users_list = get_users_list_sorted(db)
     db.close()
 
     return templates.TemplateResponse(
@@ -384,9 +404,10 @@ def delete_user(request: Request, user_id: int = Form(...), user = Depends(get_c
             success = False
         db.close()
 
+    db = SessionLocal()
     all_emps_db = db.query(ScheduleEntry.employee_name).distinct().all()
     managers_db = db.query(Manager).all()
-    users_list = db.query(User).all()
+    users_list = get_users_list_sorted(db)
     db.close()
 
     return templates.TemplateResponse(
@@ -417,7 +438,7 @@ def clear_schedule(request: Request, user = Depends(get_current_user)):
 
     all_emps_db = db.query(ScheduleEntry.employee_name).distinct().all()
     managers_db = db.query(Manager).all()
-    users_list = db.query(User).all()
+    users_list = get_users_list_sorted(db)
     db.close()
 
     return templates.TemplateResponse(
@@ -446,7 +467,7 @@ def add_manager(request: Request, employee_name: str = Form(...), user = Depends
     
     all_emps_db = db.query(ScheduleEntry.employee_name).distinct().all()
     managers_db = db.query(Manager).all()
-    users_list = db.query(User).all()
+    users_list = get_users_list_sorted(db)
     db.close()
 
     return templates.TemplateResponse(
@@ -476,7 +497,7 @@ def delete_manager(request: Request, employee_name: str = Form(...), user = Depe
 
     all_emps_db = db.query(ScheduleEntry.employee_name).distinct().all()
     managers_db = db.query(Manager).all()
-    users_list = db.query(User).all()
+    users_list = get_users_list_sorted(db)
     db.close()
 
     return templates.TemplateResponse(
@@ -537,7 +558,7 @@ def add_entry(
     
     all_emps_db = db.query(ScheduleEntry.employee_name).distinct().all()
     managers_db = db.query(Manager).all()
-    users_list = db.query(User).all()
+    users_list = get_users_list_sorted(db)
     db.close()
 
     return templates.TemplateResponse(
@@ -761,16 +782,51 @@ def get_day_details(date_str: str, user = Depends(get_current_user)):
 async def upload_excel(request: Request, file: UploadFile = File(...), user = Depends(get_current_user)):
     if not user or user.role not in ["admin", "manager"]:
         return RedirectResponse(url="/", status_code=303)
-    tmp_path = f"/tmp/{file.filename}"
-    with open(tmp_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-    ok, msg = parse_schedule_excel(tmp_path)
-    if os.path.exists(tmp_path): os.remove(tmp_path)
     
     db = SessionLocal()
     all_emps_db = db.query(ScheduleEntry.employee_name).distinct().all()
     managers_db = db.query(Manager).all()
-    users_list = db.query(User).all()
+    users_list = get_users_list_sorted(db)
+    
+    # Лимит на размер загружаемого файла (защита от исчерпания RAM и Zip Bomb)
+    MAX_SIZE = 5 * 1024 * 1024 # 5 MB
+    file_size = 0
+    tmp_path = f"/tmp/{file.filename}"
+    
+    try:
+        with open(tmp_path, "wb") as buffer:
+            while True:
+                chunk = await file.read(1024 * 1024)
+                if not chunk:
+                    break
+                file_size += len(chunk)
+                if file_size > MAX_SIZE:
+                    if os.path.exists(tmp_path): os.remove(tmp_path)
+                    db.close()
+                    return templates.TemplateResponse(
+                        request=request, name="admin.html", 
+                        context={
+                            "user": user, "msg": "Ошибка: Файл слишком большой. Максимальный размер 5 МБ.", "success": False, "tab": "schedule",
+                            "all_employees": sorted(list(set([r[0] for r in all_emps_db if r[0]]))),
+                            "managers_list": [m.employee_name for m in managers_db],
+                            "users_list": users_list
+                        }
+                    )
+                buffer.write(chunk)
+    except Exception as e:
+        db.close()
+        return templates.TemplateResponse(
+            request=request, name="admin.html", 
+            context={
+                "user": user, "msg": f"Ошибка чтения файла: {str(e)}", "success": False, "tab": "schedule",
+                "all_employees": sorted(list(set([r[0] for r in all_emps_db if r[0]]))),
+                "managers_list": [m.employee_name for m in managers_db],
+                "users_list": users_list
+            }
+        )
+    
+    ok, msg = parse_schedule_excel(tmp_path)
+    if os.path.exists(tmp_path): os.remove(tmp_path)
     db.close()
 
     return templates.TemplateResponse(

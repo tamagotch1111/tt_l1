@@ -1,17 +1,20 @@
-FROM python:3.11-slim
+FROM python:3.11.9-slim
 
-# Задаем рабочую папку внутри контейнера
+# Создаем пользователя без прав root
+RUN groupadd -r appuser && useradd -r -g appuser appuser
+
 WORKDIR /app
 
-# Устанавливаем зависимости
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Копируем исходный код
-COPY ./app ./app
+COPY . .
 
-# Открываем порт 8000 наружу
+# Создаем папку для базы данных и отдаем права безопасному пользователю
+RUN mkdir -p data && chown -R appuser:appuser /app
+
+# Переключаемся на безопасного пользователя
+USER appuser
+
 EXPOSE 8000
-
-# Запускаем веб-сервер
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
