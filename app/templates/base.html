@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ru" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Внутренняя L1 — График смен и дежурств</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        corp: { red: '#c8102e', dark: '#9b0d23' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #f4f4f8;
+            background-image: 
+                radial-gradient(at 15% 15%, rgba(200, 16, 46, 0.11) 0px, transparent 55%),
+                radial-gradient(at 85% 10%, rgba(2, 132, 199, 0.09) 0px, transparent 50%),
+                radial-gradient(at 50% 95%, rgba(124, 58, 237, 0.08) 0px, transparent 60%);
+            background-attachment: fixed;
+        }
+        .dark body {
+            background-color: #0c0c0e;
+            background-image: 
+                radial-gradient(at 10% 20%, rgba(200, 16, 46, 0.15) 0px, transparent 50%),
+                radial-gradient(at 90% 10%, rgba(2, 132, 199, 0.12) 0px, transparent 50%),
+                radial-gradient(at 50% 90%, rgba(124, 58, 237, 0.12) 0px, transparent 50%);
+            background-attachment: fixed;
+        }
+
+        .ios-glass {
+            background: rgba(255, 255, 255, 0.78);
+            backdrop-filter: blur(35px) saturate(200%);
+            -webkit-backdrop-filter: blur(35px) saturate(200%);
+            border: 1px solid rgba(255, 255, 255, 0.9);
+            box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.07), 0 0 1px 1px rgba(255, 255, 255, 0.7) inset;
+        }
+        .dark .ios-glass {
+            background: rgba(26, 26, 30, 0.65);
+            backdrop-filter: blur(32px) saturate(190%);
+            -webkit-backdrop-filter: blur(32px) saturate(190%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.5), 0 0 1px 1px rgba(255, 255, 255, 0.06) inset;
+        }
+
+        html.dark,
+        .dark input,
+        .dark select,
+        .dark textarea {
+            color-scheme: dark;
+        }
+        .dark select option {
+            background-color: #1c1c22 !important;
+            color: #f1f5f9 !important;
+        }
+    </style>
+    <script>
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+        function toggleDark() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.theme = 'light';
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.theme = 'dark';
+            }
+        }
+    </script>
+</head>
+<body class="text-gray-900 dark:text-gray-100 flex flex-col min-h-screen transition-colors duration-300">
+    <!-- ПЛАВАЮЩАЯ ШАПКА: СТРОГО БЕЗ ПОЛОС НА ЭКРАНЕ -->
+    <header class="sticky top-0 z-40 px-4 pt-2.5 pb-2 bg-transparent pointer-events-none">
+        <div class="max-w-7xl mx-auto rounded-[24px] px-6 h-14 flex items-center justify-between bg-corp-red dark:bg-[#7a0a1c] border border-white/25 shadow-xl text-white pointer-events-auto">
+            <div class="flex items-center space-x-6">
+                <span class="font-extrabold text-lg tracking-wide uppercase flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-white/90 animate-pulse"></span>
+                    Внутренняя L1
+                </span>
+                <nav class="flex space-x-2 text-xs font-semibold">
+                    <a href="/" class="bg-white/15 hover:bg-white/25 px-3 py-1.5 rounded-xl transition">Главная</a>
+                    {% if user.role == 'admin' %}
+                    <a href="/admin" class="hover:bg-white/20 px-3 py-1.5 rounded-xl transition border border-white/20">⚙️ Админка</a>
+                    {% endif %}
+                </nav>
+            </div>
+            <div class="flex items-center space-x-4 text-xs">
+                <button onclick="toggleDark()" class="bg-black/20 hover:bg-black/35 px-3 py-1.5 rounded-full font-medium transition active:scale-95">🌓 Тема</button>
+                <span class="font-light opacity-90 hidden sm:inline">{{ user.full_name }}</span>
+                <a href="/logout" class="underline text-red-200 hover:text-white transition">Выход</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl mx-auto px-4 pt-2 pb-12 w-full">
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>

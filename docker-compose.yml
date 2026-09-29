@@ -1,0 +1,10 @@
+services:
+  web:
+    build: .
+    container_name: duty_calendar_app
+    restart: always
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./calendar.db:/app/calendar.db
+      - ./app:/app/app

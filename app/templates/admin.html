@@ -1,0 +1,298 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="text-2xl font-extrabold tracking-tight mb-6 border-l-4 border-corp-red pl-3">Панель администратора</h1>
+
+{% if msg %}
+<div class="ios-glass p-4 rounded-2xl mb-6 {% if success %}text-emerald-700 dark:text-emerald-300 border-emerald-500/40{% else %}text-rose-700 dark:text-rose-300 border-rose-500/40{% endif %} font-medium text-sm">
+    {{ msg }}
+</div>
+{% endif %}
+
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+    <!-- ЗАГРУЗКА И ОЧИСТКА EXCEL -->
+    <div class="ios-glass p-6 rounded-[28px] flex flex-col justify-between">
+        <div>
+            <h2 class="text-base font-bold mb-4 flex items-center gap-2">📥 Загрузить Excel</h2>
+            <form method="post" action="/admin/upload-excel" enctype="multipart/form-data" class="space-y-4">
+                <input type="file" name="file" accept=".xlsx,.xlsm" required 
+                       class="block w-full text-xs text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:bg-corp-red file:text-white hover:file:bg-corp-dark cursor-pointer transition">
+                <p class="text-xs text-gray-400">Форматы .xlsx и .xlsm.</p>
+                <button type="submit" class="w-full bg-corp-red hover:bg-corp-dark text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow transition active:scale-95">
+                    Обновить график
+                </button>
+            </form>
+        </div>
+
+        <!-- КНОПКА ОЧИСТКИ ТЕКУЩЕГО ГРАФИКА -->
+        <div class="pt-5 mt-5 border-t border-black/5 dark:border-white/10">
+            <form method="post" action="/admin/clear-schedule" onsubmit="return confirm('Вы уверены, что хотите полностью очистить график смен и дежурств?')">
+                <button type="submit" class="w-full bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/25 font-bold text-xs px-4 py-2.5 rounded-xl transition active:scale-95 flex items-center justify-center gap-2">
+                    <span>🗑️</span>
+                    <span>Очистить график смен</span>
+                </button>
+            </form>
+            <p class="text-[11px] text-gray-400 mt-2 text-center">Сбросит все импортированные смены и дежурства.</p>
+        </div>
+    </div>
+
+    <!-- УПРАВЛЕНИЕ РУКОВОДИТЕЛЯМИ -->
+    <div class="ios-glass p-6 rounded-[28px] relative z-30">
+        <h2 class="text-base font-bold mb-4 flex items-center gap-2">👔 Руководители</h2>
+        
+        <form method="post" action="/admin/add-manager" class="space-y-3 mb-4">
+            <div class="relative">
+                <input type="hidden" name="employee_name" id="valNewMgr" value="" required>
+                <button type="button" onclick="toggleAdminDropdown('mgrDropdown')" 
+                        class="w-full bg-white/70 dark:bg-[#1c1c22]/90 hover:bg-white dark:hover:bg-[#25252b] border border-black/10 dark:border-white/15 rounded-xl px-3.5 py-2 text-xs text-gray-800 dark:text-gray-100 flex items-center justify-between transition shadow-sm cursor-pointer select-none">
+                    <span id="labelNewMgr" class="font-medium text-gray-400">Выберите сотрудника...</span>
+                    <span class="text-gray-400 text-[10px]">▼</span>
+                </button>
+                <div id="mgrDropdown" class="hidden absolute left-0 mt-2 w-full max-h-48 ios-inner-scroll ios-dropdown-menu rounded-2xl p-1.5 z-50 animate-dropdown">
+                    {% for emp in all_employees %}
+                    <div onclick="selectNewManager('{{ emp }}')" class="px-3 py-2 text-xs rounded-xl hover:bg-corp-red hover:text-white cursor-pointer transition font-medium">{{ emp }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+            <button type="submit" class="w-full bg-corp-red hover:bg-corp-dark text-white font-bold text-xs px-4 py-2 rounded-xl shadow transition active:scale-95">
+                Назначить руководителем
+            </button>
+        </form>
+
+        <div class="space-y-1.5 max-h-36 overflow-y-auto ios-inner-scroll pr-1">
+            {% for m in managers_list %}
+            <div class="flex items-center justify-between text-xs px-3 py-1.5 rounded-xl bg-black/5 dark:bg-white/5">
+                <span class="font-medium">{{ m }}</span>
+                <form method="post" action="/admin/delete-manager" class="inline">
+                    <input type="hidden" name="employee_name" value="{{ m }}">
+                    <button type="submit" class="text-rose-600 hover:text-rose-800 dark:text-rose-400 font-bold px-1.5 py-0.5 rounded transition">✕</button>
+                </form>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- РУЧНОЕ НАЗНАЧЕНИЕ -->
+    <div class="ios-glass p-6 rounded-[28px] relative z-20">
+        <h2 class="text-base font-bold mb-4 flex items-center gap-2">✍️ Ручное назначение</h2>
+        <form method="post" action="/admin/add-entry" class="space-y-3">
+            
+            <div>
+                <label class="block text-xs font-semibold mb-1 opacity-75">Дата</label>
+                <input type="hidden" name="date_val" id="valDate" value="2026-09-29" required>
+                <div class="grid grid-cols-3 gap-1.5">
+                    <div class="relative">
+                        <button type="button" onclick="toggleAdminDropdown('dayDropdown')" 
+                                class="w-full bg-white/70 dark:bg-[#1c1c22]/90 hover:bg-white dark:hover:bg-[#25252b] border border-black/10 dark:border-white/15 rounded-xl px-2.5 py-2 text-xs text-gray-800 dark:text-gray-100 flex items-center justify-between transition shadow-sm cursor-pointer select-none">
+                            <span id="labelDay" class="font-medium">29</span>
+                            <span class="text-gray-400 text-[10px]">▼</span>
+                        </button>
+                        <div id="dayDropdown" class="hidden absolute left-0 mt-2 w-full max-h-44 ios-inner-scroll ios-dropdown-menu rounded-2xl p-1.5 z-50 animate-dropdown">
+                            {% for d in range(1, 32) %}
+                            <div onclick="selectDatePart('day', '{{ '%02d' % d }}', '{{ d }}')" class="px-2 py-1.5 text-xs rounded-xl hover:bg-corp-red hover:text-white cursor-pointer transition font-medium text-center">{{ d }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="relative">
+                        <button type="button" onclick="toggleAdminDropdown('monthDropdown')" 
+                                class="w-full bg-white/70 dark:bg-[#1c1c22]/90 hover:bg-white dark:hover:bg-[#25252b] border border-black/10 dark:border-white/15 rounded-xl px-2.5 py-2 text-xs text-gray-800 dark:text-gray-100 flex items-center justify-between transition shadow-sm cursor-pointer select-none">
+                            <span id="labelMonth" class="font-medium">Сентябрь</span>
+                            <span class="text-gray-400 text-[10px]">▼</span>
+                        </button>
+                        <div id="monthDropdown" class="hidden absolute left-0 mt-2 w-full max-h-44 ios-inner-scroll ios-dropdown-menu rounded-2xl p-1.5 z-50 animate-dropdown">
+                            {% set months = [('01', 'Январь'), ('02', 'Февраль'), ('03', 'Март'), ('04', 'Апрель'), ('05', 'Май'), ('06', 'Июнь'), ('07', 'Июль'), ('08', 'Август'), ('09', 'Сентябрь'), ('10', 'Октябрь'), ('11', 'Ноябрь'), ('12', 'Декабрь')] %}
+                            {% for m_val, m_name in months %}
+                            <div onclick="selectDatePart('month', '{{ m_val }}', '{{ m_name }}')" class="px-2 py-1.5 text-xs rounded-xl hover:bg-corp-red hover:text-white cursor-pointer transition font-medium">{{ m_name }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="relative">
+                        <button type="button" onclick="toggleAdminDropdown('yearDropdown')" 
+                                class="w-full bg-white/70 dark:bg-[#1c1c22]/90 hover:bg-white dark:hover:bg-[#25252b] border border-black/10 dark:border-white/15 rounded-xl px-2.5 py-2 text-xs text-gray-800 dark:text-gray-100 flex items-center justify-between transition shadow-sm cursor-pointer select-none">
+                            <span id="labelYear" class="font-medium">2026</span>
+                            <span class="text-gray-400 text-[10px]">▼</span>
+                        </button>
+                        <div id="yearDropdown" class="hidden absolute left-0 mt-2 w-full max-h-44 ios-inner-scroll ios-dropdown-menu rounded-2xl p-1.5 z-50 animate-dropdown">
+                            <div onclick="selectDatePart('year', '2026', '2026')" class="px-2 py-1.5 text-xs rounded-xl hover:bg-corp-red hover:text-white cursor-pointer transition font-medium text-center">2026</div>
+                            <div onclick="selectDatePart('year', '2027', '2027')" class="px-2 py-1.5 text-xs rounded-xl hover:bg-corp-red hover:text-white cursor-pointer transition font-medium text-center">2027</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="relative">
+                <label class="block text-xs font-semibold mb-1 opacity-75">Сотрудник</label>
+                <input type="hidden" name="employee_name" id="valEmp" value="" required>
+                <button type="button" onclick="toggleAdminDropdown('empDropdown')" 
+                        class="w-full bg-white/70 dark:bg-[#1c1c22]/90 hover:bg-white dark:hover:bg-[#25252b] border border-black/10 dark:border-white/15 rounded-xl px-3.5 py-2 text-xs text-gray-800 dark:text-gray-100 flex items-center justify-between transition shadow-sm cursor-pointer select-none">
+                    <span id="labelEmp" class="font-medium text-gray-400">Выберите сотрудника...</span>
+                    <span class="text-gray-400 text-[10px]">▼</span>
+                </button>
+                <div id="empDropdown" class="hidden absolute left-0 mt-2 w-full max-h-48 ios-inner-scroll ios-dropdown-menu rounded-2xl p-1.5 z-50 animate-dropdown">
+                    {% for emp in all_employees %}
+                    <div onclick="selectEmployeeOption('{{ emp }}')" class="px-3 py-2 text-xs rounded-xl hover:bg-corp-red hover:text-white cursor-pointer transition font-medium">{{ emp }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2.5">
+                <div class="relative">
+                    <label class="block text-xs font-semibold mb-1 opacity-75">Смена</label>
+                    <input type="hidden" name="shift_type" id="valShift" value="none">
+                    <button type="button" onclick="toggleAdminDropdown('shiftDropdown')" 
+                            class="w-full bg-white/70 dark:bg-[#1c1c22]/90 hover:bg-white dark:hover:bg-[#25252b] border border-black/10 dark:border-white/15 rounded-xl px-3 py-2 text-xs text-gray-800 dark:text-gray-100 flex items-center justify-between transition shadow-sm cursor-pointer select-none">
+                        <span id="labelShift" class="font-medium">Без смены</span>
+                        <span class="text-gray-400 text-[10px]">▼</span>
+                    </button>
+                    <div id="shiftDropdown" class="hidden absolute left-0 mt-2 w-full max-h-48 ios-inner-scroll ios-dropdown-menu rounded-2xl p-1.5 z-50 animate-dropdown">
+                        <div onclick="selectAdminOption('shift', 'none', 'Без смены')" class="px-3 py-2 text-xs rounded-xl hover:bg-corp-red hover:text-white cursor-pointer transition font-medium">Без смены</div>
+                        <div onclick="selectAdminOption('shift', '07:00', '07:00')" class="px-3 py-2 text-xs rounded-xl hover:bg-corp-red hover:text-white cursor-pointer transition font-medium">07:00</div>
+                        <div onclick="selectAdminOption('shift', '08:00', '08:00 (сменщик)')" class="px-3 py-2 text-xs rounded-xl hover:bg-corp-red hover:text-white cursor-pointer transition font-medium">08:00 (сменщик)</div>
+                        <div onclick="selectAdminOption('shift', '09:00', '09:00')" class="px-3 py-2 text-xs rounded-xl hover:bg-corp-red hover:text-white cursor-pointer transition font-medium">09:00</div>
+                        <div onclick="selectAdminOption('shift', '10:00', '10:00 (сменщик)')" class="px-3 py-2 text-xs rounded-xl hover:bg-corp-red hover:text-white cursor-pointer transition font-medium">10:00 (сменщик)</div>
+                        <div onclick="selectAdminOption('shift', '12:00', '12:00')" class="px-3 py-2 text-xs rounded-xl hover:bg-corp-red hover:text-white cursor-pointer transition font-medium">12:00</div>
+                        <div onclick="selectAdminOption('shift', '15:00', '15:00')" class="px-3 py-2 text-xs rounded-xl hover:bg-corp-red hover:text-white cursor-pointer transition font-medium">15:00</div>
+                    </div>
+                </div>
+
+                <div class="relative">
+                    <label class="block text-xs font-semibold mb-1 opacity-75">Дежурство</label>
+                    <input type="hidden" name="duty_system" id="valDuty" value="none">
+                    <button type="button" onclick="toggleAdminDropdown('dutyDropdown')" 
+                            class="w-full bg-white/70 dark:bg-[#1c1c22]/90 hover:bg-white dark:hover:bg-[#25252b] border border-black/10 dark:border-white/15 rounded-xl px-3 py-2 text-xs text-gray-800 dark:text-gray-100 flex items-center justify-between transition shadow-sm cursor-pointer select-none">
+                        <span id="labelDuty" class="font-medium">Нет</span>
+                        <span class="text-gray-400 text-[10px]">▼</span>
+                    </button>
+                    <div id="dutyDropdown" class="hidden absolute left-0 mt-2 w-full max-h-48 ios-inner-scroll ios-dropdown-menu rounded-2xl p-1.5 z-50 animate-dropdown">
+                        <div onclick="selectAdminOption('duty', 'none', 'Нет')" class="px-3 py-2 text-xs rounded-xl hover:bg-corp-red hover:text-white cursor-pointer transition font-medium">Нет</div>
+                        <div onclick="selectAdminOption('duty', 'МБ', 'МБ')" class="px-3 py-2 text-xs rounded-xl hover:bg-corp-red hover:text-white cursor-pointer transition font-medium">МБ</div>
+                        <div onclick="selectAdminOption('duty', 'НКЦ', 'НКЦ')" class="px-3 py-2 text-xs rounded-xl hover:bg-corp-red hover:text-white cursor-pointer transition font-medium">НКЦ</div>
+                        <div onclick="selectAdminOption('duty', 'НРД', 'НРД')" class="px-3 py-2 text-xs rounded-xl hover:bg-corp-red hover:text-white cursor-pointer transition font-medium">НРД</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="relative">
+                <label class="block text-xs font-semibold mb-1 opacity-75">Статус отсутствия</label>
+                <input type="hidden" name="status" id="valStatus" value="none">
+                <button type="button" onclick="toggleAdminDropdown('statusDropdown')" 
+                        class="w-full bg-white/70 dark:bg-[#1c1c22]/90 hover:bg-white dark:hover:bg-[#25252b] border border-black/10 dark:border-white/15 rounded-xl px-3.5 py-2 text-xs text-gray-800 dark:text-gray-100 flex items-center justify-between transition shadow-sm cursor-pointer select-none">
+                    <span id="labelStatus" class="font-medium">Обычный рабочий день</span>
+                    <span class="text-gray-400 text-[10px]">▼</span>
+                </button>
+                <div id="statusDropdown" class="hidden absolute left-0 mt-2 w-full max-h-48 ios-inner-scroll ios-dropdown-menu rounded-2xl p-1.5 z-50 animate-dropdown">
+                    <div onclick="selectAdminOption('status', 'none', 'Обычный рабочий день')" class="px-3 py-2 text-xs rounded-xl hover:bg-corp-red hover:text-white cursor-pointer transition font-medium">Обычный рабочий день</div>
+                    <div onclick="selectAdminOption('status', 'vacation', '🏖 Отпуск')" class="px-3 py-2 text-xs rounded-xl hover:bg-corp-red hover:text-white cursor-pointer transition font-medium">🏖 Отпуск</div>
+                    <div onclick="selectAdminOption('status', 'sick', '💊 Больничный')" class="px-3 py-2 text-xs rounded-xl hover:bg-corp-red hover:text-white cursor-pointer transition font-medium">💊 Больничный</div>
+                </div>
+            </div>
+
+            <button type="submit" class="w-full bg-gray-800 hover:bg-black dark:bg-zinc-700 dark:hover:bg-zinc-600 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow transition active:scale-95">
+                Сохранить запись
+            </button>
+        </form>
+    </div>
+</div>
+
+<style>
+    .ios-inner-scroll {
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(0, 0, 0, 0.22) transparent;
+        overscroll-behavior: contain;
+    }
+    .dark .ios-inner-scroll {
+        scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
+    }
+    .ios-inner-scroll::-webkit-scrollbar {
+        width: 5px;
+    }
+    .ios-inner-scroll::-webkit-scrollbar-track {
+        background: transparent;
+        margin: 6px 0;
+    }
+    .ios-inner-scroll::-webkit-scrollbar-thumb {
+        background: rgba(0, 0, 0, 0.22);
+        border-radius: 9999px;
+    }
+    .dark .ios-inner-scroll::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.22);
+    }
+
+    .ios-dropdown-menu {
+        background: rgba(255, 255, 255, 0.88);
+        backdrop-filter: blur(35px) saturate(190%);
+        -webkit-backdrop-filter: blur(35px) saturate(190%);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.25);
+    }
+    .dark .ios-dropdown-menu {
+        background: rgba(32, 32, 38, 0.92);
+        backdrop-filter: blur(35px) saturate(190%);
+        -webkit-backdrop-filter: blur(35px) saturate(190%);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.65);
+    }
+
+    @keyframes dropdownPop {
+        0% { opacity: 0; transform: scale(0.95) translateY(-6px); }
+        100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .animate-dropdown {
+        animation: dropdownPop 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+</style>
+
+<script>
+    let selectedYear = '2026';
+    let selectedMonth = '09';
+    let selectedDay = '29';
+
+    function toggleAdminDropdown(id) {
+        const menu = document.getElementById(id);
+        const allMenus = document.querySelectorAll('.ios-dropdown-menu');
+        allMenus.forEach(m => {
+            if (m.id !== id) m.classList.add('hidden');
+        });
+        menu.classList.toggle('hidden');
+    }
+
+    window.addEventListener('click', function(e) {
+        if (!e.target.closest('.relative')) {
+            document.querySelectorAll('.ios-dropdown-menu').forEach(m => m.classList.add('hidden'));
+        }
+    });
+
+    function selectDatePart(part, val, label) {
+        if (part === 'day') { selectedDay = val; document.getElementById('labelDay').innerText = label; }
+        if (part === 'month') { selectedMonth = val; document.getElementById('labelMonth').innerText = label; }
+        if (part === 'year') { selectedYear = val; document.getElementById('labelYear').innerText = label; }
+        
+        document.getElementById(part + 'Dropdown').classList.add('hidden');
+        document.getElementById('valDate').value = `${selectedYear}-${selectedMonth}-${selectedDay}`;
+    }
+
+    function selectEmployeeOption(name) {
+        document.getElementById('valEmp').value = name;
+        const lbl = document.getElementById('labelEmp');
+        lbl.innerText = name;
+        lbl.classList.remove('text-gray-400');
+        document.getElementById('empDropdown').classList.add('hidden');
+    }
+
+    function selectNewManager(name) {
+        document.getElementById('valNewMgr').value = name;
+        const lbl = document.getElementById('labelNewMgr');
+        lbl.innerText = name;
+        lbl.classList.remove('text-gray-400');
+        document.getElementById('mgrDropdown').classList.add('hidden');
+    }
+
+    function selectAdminOption(type, val, label) {
+        document.getElementById('val' + type.charAt(0).toUpperCase() + type.slice(1)).value = val;
+        document.getElementById('label' + type.charAt(0).toUpperCase() + type.slice(1)).innerText = label;
+        document.getElementById(type + 'Dropdown').classList.add('hidden');
+    }
+</script>
+{% endblock %}

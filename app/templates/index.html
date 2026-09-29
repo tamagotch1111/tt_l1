@@ -1,0 +1,754 @@
+{% extends "base.html" %}
+{% block content %}
+
+<!-- Подключаем FullCalendar напрямую -->
+<link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/main.min.css' rel='stylesheet' />
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js'></script>
+<script src='https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.10/locales/ru.global.min.js'></script>
+
+<style>
+    .fc {
+        --fc-border-color: rgba(0, 0, 0, 0.08) !important;
+        --fc-today-bg-color: transparent !important;
+    }
+    .dark .fc {
+        --fc-border-color: rgba(255, 255, 255, 0.07) !important;
+        --fc-today-bg-color: transparent !important;
+    }
+
+    .fc-daygrid-event-harness {
+        margin: 0 !important;
+        padding: 2px 1px !important;
+        box-sizing: border-box !important;
+    }
+    
+    .fc-event {
+        border-radius: 9999px !important;
+        height: 20px !important;
+        line-height: 20px !important;
+        margin: 0 !important;
+        border: none !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25) !important;
+        box-sizing: border-box !important;
+        cursor: pointer !important;
+    }
+    .fc-event-title {
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        line-height: 20px !important;
+        padding: 0 8px !important;
+        font-size: 0.72rem !important;
+        font-weight: 500 !important;
+        position: sticky !important;
+        left: 4px !important;
+    }
+    
+    .fc-event-absence {
+        border: 1px dashed rgba(255, 255, 255, 0.7) !important;
+    }
+    .fc-event-absence .fc-event-title {
+        line-height: 18px !important;
+        font-weight: 600 !important;
+    }
+
+    .fc-absence-divider {
+        height: 8px !important;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        pointer-events: none !important;
+        cursor: default !important;
+    }
+    .fc-absence-divider::before {
+        content: '';
+        display: block;
+        width: 100%;
+        margin-top: 3px;
+        border-top: 1px dashed rgba(255, 255, 255, 0.2);
+    }
+    :not(.dark) .fc-absence-divider::before {
+        border-top: 1px dashed rgba(0, 0, 0, 0.15);
+    }
+
+    .fc-theme-standard th, 
+    .fc-col-header-cell {
+        background: rgba(0, 0, 0, 0.03) !important;
+        border-color: rgba(0, 0, 0, 0.08) !important;
+    }
+    .fc-col-header-cell-cushion {
+        color: #64748b !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        font-size: 0.75rem !important;
+        padding: 8px 4px !important;
+    }
+
+    .dark .fc,
+    .dark .fc table,
+    .dark .fc td,
+    .dark .fc th,
+    .dark .fc-theme-standard td,
+    .dark .fc-theme-standard th,
+    .dark .fc-scrollgrid,
+    .dark .fc-scrollgrid-section,
+    .dark .fc-scrollgrid-section table,
+    .dark .fc-daygrid-day,
+    .dark .fc-daygrid-day-frame {
+        background-color: transparent;
+        border-color: rgba(255, 255, 255, 0.07) !important;
+        box-shadow: none !important;
+        outline: none !important;
+    }
+    .dark .fc-col-header,
+    .dark .fc-col-header-cell {
+        background: rgba(30, 30, 36, 0.85) !important;
+        border-color: rgba(255, 255, 255, 0.08) !important;
+    }
+    .dark .fc-col-header-cell-cushion {
+        color: #94a3b8 !important;
+    }
+
+    /* ФИКСИРОВАННАЯ ШАПКА ДНЯ — ЧИСЛО ВСЕГДА СПРАВА */
+    .fc-daygrid-day-top {
+        height: 25px !important;
+        padding: 2px 4px 0 0 !important;
+    }
+    .fc-daygrid-day-number {
+        font-size: 0.75rem !important;
+        font-weight: 600 !important;
+        line-height: 22px !important;
+        padding: 0 4px !important;
+    }
+    .dark .fc-daygrid-day-number {
+        color: #cbd5e1 !important;
+    }
+    .dark .fc-day-other .fc-daygrid-day-number {
+        color: #475569 !important;
+    }
+
+    /* МЯГКАЯ ПОДСВЕТКА СЕГОДНЯШНЕГО ДНЯ */
+    .dark td.fc-day-today,
+    .dark .fc-daygrid-day.fc-day-today {
+        background: rgba(200, 16, 46, 0.08) !important;
+        border-color: rgba(255, 255, 255, 0.07) !important;
+    }
+    td.fc-day-today,
+    .fc-daygrid-day.fc-day-today {
+        background: rgba(200, 16, 46, 0.04) !important;
+        border-color: rgba(0, 0, 0, 0.08) !important;
+    }
+
+    /* КРУГЛЫЙ БЕЙДЖ ДАТЫ: СПРАВА, БЕЗ СМЕЩЕНИЙ */
+    .fc-day-today .fc-daygrid-day-number {
+        background: #c8102e !important;
+        color: #ffffff !important;
+        width: 22px !important;
+        height: 22px !important;
+        line-height: 22px !important;
+        text-align: center !important;
+        border-radius: 9999px !important;
+        padding: 0 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 0.72rem !important;
+        font-weight: 700 !important;
+        box-shadow: 0 2px 6px rgba(200, 16, 46, 0.4) !important;
+    }
+    .dark .fc-day-today .fc-daygrid-day-number {
+        box-shadow: 0 0 10px rgba(200, 16, 46, 0.6) !important;
+    }
+
+    .dark .fc-button {
+        background: rgba(255, 255, 255, 0.08) !important;
+        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+        color: #f1f5f9 !important;
+        border-radius: 12px !important;
+    }
+    .dark .fc-button-active {
+        background: #c8102e !important;
+        border-color: #c8102e !important;
+        color: #ffffff !important;
+    }
+
+    .ios-inner-scroll {
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(0, 0, 0, 0.22) transparent;
+        overscroll-behavior: contain;
+    }
+    .dark .ios-inner-scroll {
+        scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
+    }
+    .ios-inner-scroll::-webkit-scrollbar {
+        width: 5px;
+    }
+    .ios-inner-scroll::-webkit-scrollbar-track {
+        background: transparent;
+        margin: 6px 0;
+    }
+    .ios-inner-scroll::-webkit-scrollbar-thumb {
+        background: rgba(0, 0, 0, 0.22);
+        border-radius: 9999px;
+    }
+    .dark .ios-inner-scroll::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.22);
+    }
+
+    .ios-dropdown-menu {
+        background: rgba(255, 255, 255, 0.88);
+        backdrop-filter: blur(35px) saturate(190%);
+        -webkit-backdrop-filter: blur(35px) saturate(190%);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.25);
+    }
+    .dark .ios-dropdown-menu {
+        background: rgba(32, 32, 38, 0.92);
+        backdrop-filter: blur(35px) saturate(190%);
+        -webkit-backdrop-filter: blur(35px) saturate(190%);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.65);
+    }
+
+    @keyframes dropdownPop {
+        0% { opacity: 0; transform: scale(0.95) translateY(-6px); }
+        100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .animate-dropdown {
+        animation: dropdownPop 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    /* МОДАЛЬНОЕ ОКНО */
+    .ios-modal-backdrop {
+        background: rgba(0, 0, 0, 0.55);
+        backdrop-filter: blur(20px) saturate(130%);
+        -webkit-backdrop-filter: blur(20px) saturate(130%);
+    }
+
+    .ios-glass-card {
+        background: rgba(255, 255, 255, 0.92);
+        border: 1px solid rgba(255, 255, 255, 0.65);
+        box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.35);
+    }
+    .dark .ios-glass-card {
+        background: rgba(28, 28, 34, 0.94);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow: 0 30px 70px -12px rgba(0, 0, 0, 0.75);
+    }
+
+    .ios-inner-group {
+        background: rgba(0, 0, 0, 0.035);
+        border: 1px solid rgba(0, 0, 0, 0.04);
+    }
+    .dark .ios-inner-group {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .ios-scroll-fade {
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(0, 0, 0, 0.22) transparent;
+        mask-image: linear-gradient(to bottom, transparent 0px, black 24px, black calc(100% - 28px), transparent 100%);
+        -webkit-mask-image: linear-gradient(to bottom, transparent 0px, black 24px, black calc(100% - 28px), transparent 100%);
+    }
+    .dark .ios-scroll-fade {
+        scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
+    }
+    .ios-scroll-fade::-webkit-scrollbar {
+        width: 5px;
+    }
+    .ios-scroll-fade::-webkit-scrollbar-thumb {
+        background: rgba(0, 0, 0, 0.22);
+        border-radius: 9999px;
+    }
+    .dark .ios-scroll-fade::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.22);
+    }
+
+    @keyframes iosSpringPop {
+        0% { opacity: 0; transform: scale(0.92) translateY(16px); }
+        100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .animate-ios {
+        animation: iosSpringPop 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+</style>
+
+<div class="mb-6 flex justify-between items-center">
+    <h1 class="text-2xl font-extrabold tracking-tight border-l-4 border-corp-red pl-3">Оперативная сводка на {{ today }}</h1>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+
+    <!-- 1 СТОЛБЕЦ: РЕГИСТРАЦИИ -->
+    <div class="flex flex-col space-y-4">
+        <div class="pb-1 font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider text-xs flex items-center gap-1.5 ml-1">
+            <span>🛡️ Регистрации</span>
+        </div>
+
+        {% for sys_name, title in [("МБ", "Сегодня в МБ"), ("НРД", "Сегодня в НРД"), ("НКЦ", "Сегодня в НКЦ")] %}
+        <div class="ios-glass rounded-[24px] p-5 border-l-4 border-l-corp-red">
+            <div class="text-[11px] uppercase font-bold tracking-wider text-gray-400 mb-2">
+                {{ title }}
+            </div>
+            
+            {% set r = blocks.reg[sys_name] %}
+            {% if r.main or r.morning or r.evening %}
+                {% if r.main %}
+                <div class="text-base font-bold text-corp-red dark:text-red-400 mb-2 leading-snug">
+                    {{ r.main }}
+                </div>
+                {% else %}
+                <div class="text-xs text-gray-400 italic mb-2">Основной не назначен</div>
+                {% endif %}
+
+                <div class="space-y-1.5 pt-2.5 border-t border-black/5 dark:border-white/10 text-xs">
+                    {% if r.morning %}
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-0.5">
+                        <span class="text-gray-400 italic text-[11px]">Утро (07:00–09:00):</span>
+                        <span class="font-medium text-gray-700 dark:text-gray-200">{{ r.morning }}</span>
+                    </div>
+                    {% endif %}
+                    {% if r.evening %}
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-0.5">
+                        <span class="text-gray-400 italic text-[11px]">Вечер (18:00–23:59):</span>
+                        <span class="font-medium text-gray-700 dark:text-gray-200">{{ r.evening }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            {% else %}
+                <span class="text-gray-400 text-xs italic">Нет назначений</span>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- 2 СТОЛБЕЦ: СМЕНЫ -->
+    <div class="flex flex-col space-y-4">
+        <div class="pb-1 font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider text-xs flex items-center gap-1.5 ml-1">
+            <span>⏰ Смены</span>
+        </div>
+
+        <div class="ios-glass rounded-[24px] p-5 border-l-4 border-l-red-500">
+            <div class="text-[11px] uppercase font-bold tracking-wider text-gray-400 mb-2">Смена 07:00</div>
+            {% if blocks.s7 %}
+                <ul class="space-y-1 font-medium text-xs">{% for name in blocks.s7 %}<li>• {{ name }}</li>{% endfor %}</ul>
+            {% else %}<span class="text-gray-400 text-xs italic">Нет смен</span>{% endif %}
+        </div>
+
+        <div class="ios-glass rounded-[24px] p-5 border-l-4 border-l-sky-500">
+            <div class="text-[11px] uppercase font-bold tracking-wider text-gray-400 mb-2">Смена 12:00</div>
+            {% if blocks.s12 %}
+                <ul class="space-y-1 font-medium text-xs">{% for name in blocks.s12 %}<li>• {{ name }}</li>{% endfor %}</ul>
+            {% else %}<span class="text-gray-400 text-xs italic">Нет смен</span>{% endif %}
+        </div>
+
+        <div class="ios-glass rounded-[24px] p-5 border-l-4 border-l-purple-500">
+            <div class="text-[11px] uppercase font-bold tracking-wider text-gray-400 mb-2">Смена 15:00</div>
+            {% if blocks.s15 %}
+                <ul class="space-y-1 font-medium text-xs">{% for name in blocks.s15 %}<li>• {{ name }}</li>{% endfor %}</ul>
+            {% else %}<span class="text-gray-400 text-xs italic">Нет смен</span>{% endif %}
+        </div>
+
+        <div class="ios-glass rounded-[24px] p-5 border-l-4 border-l-[#9b0d23]">
+            <div class="text-[11px] uppercase font-bold tracking-wider text-gray-400 mb-2">Сменщики сегодня (08:00 / 10:00)</div>
+            {% if blocks.relievers %}
+                <ul class="space-y-1 font-medium text-xs text-rose-700 dark:text-rose-400">
+                    {% for item in blocks.relievers %}<li>• {{ item }}</li>{% endfor %}
+                </ul>
+            {% else %}<span class="text-gray-400 text-xs italic">Сменщиков нет</span>{% endif %}
+        </div>
+    </div>
+
+    <!-- 3 СТОЛБЕЦ: ОТСУТСТВИЯ + РУКОВОДИТЕЛИ -->
+    <div class="flex flex-col space-y-4">
+        <div class="pb-1 font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider text-xs flex items-center gap-1.5 ml-1">
+            <span>🏖️ Отсутствия</span>
+        </div>
+
+        <div class="ios-glass rounded-[24px] p-5 border-l-4 border-l-amber-500">
+            <div class="text-[11px] uppercase font-bold tracking-wider text-gray-400 mb-2">🏖 В отпуске</div>
+            {% if blocks.vacation %}
+                <ul class="space-y-1 font-medium text-xs text-amber-600 dark:text-amber-400">
+                    {% for name in blocks.vacation %}<li>• {{ name }}</li>{% endfor %}
+                </ul>
+            {% else %}<span class="text-gray-400 text-xs italic">Отпусков нет</span>{% endif %}
+        </div>
+
+        <div class="ios-glass rounded-[24px] p-5 border-l-4 border-l-orange-500">
+            <div class="text-[11px] uppercase font-bold tracking-wider text-gray-400 mb-2">💊 На больничном</div>
+            {% if blocks.sick %}
+                <ul class="space-y-1 font-medium text-xs text-orange-600 dark:text-orange-400">
+                    {% for name in blocks.sick %}<li>• {{ name }}</li>{% endfor %}
+                </ul>
+            {% else %}<span class="text-gray-400 text-xs italic">Все здоровы</span>{% endif %}
+        </div>
+
+        <div class="pb-1 font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider text-xs flex items-center gap-1.5 ml-1 mt-2">
+            <span>👔 Руководители</span>
+        </div>
+        <div class="ios-glass rounded-[24px] p-5 border-l-4 border-l-indigo-500">
+            <div class="text-[11px] uppercase font-bold tracking-wider text-gray-400 mb-2">Статус сегодня</div>
+            {% if blocks.managers_status %}
+                <ul class="space-y-2 font-medium text-xs">
+                    {% for mgr in blocks.managers_status %}
+                    <li class="flex items-center justify-between">
+                        <span class="text-gray-800 dark:text-gray-200 font-semibold">• {{ mgr.name }}</span>
+                        <span class="px-2 py-0.5 rounded-lg text-[11px] font-bold bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border border-indigo-500/25">{{ mgr.status }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            {% else %}<span class="text-gray-400 text-xs italic">Нет данных</span>{% endif %}
+        </div>
+    </div>
+
+</div>
+
+<!-- СТЕКЛЯННЫЙ ИНТЕРАКТИВНЫЙ КАЛЕНДАРЬ -->
+<div class="ios-glass rounded-[28px] p-6">
+    <div class="flex flex-col lg:flex-row justify-between lg:items-center mb-5 gap-3">
+        <div>
+            <h2 class="text-xl font-extrabold tracking-tight text-gray-900 dark:text-white">📅 График смен и отпусков</h2>
+            <p class="text-xs text-gray-400">Используйте фильтры ниже для поиска смен конкретных сотрудников</p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-1.5 text-xs font-semibold select-none">
+            <span class="px-2.5 py-1 rounded-lg bg-red-600 text-white shadow-sm">07:00</span>
+            <span class="px-2.5 py-1 rounded-lg bg-slate-600 text-white shadow-sm">09:00</span>
+            <span class="px-2.5 py-1 rounded-lg bg-sky-600 text-white shadow-sm">12:00</span>
+            <span class="px-2.5 py-1 rounded-lg bg-purple-600 text-white shadow-sm">15:00</span>
+            <span class="px-2.5 py-1 rounded-lg bg-[#9b0d23] text-white shadow-sm">08:00 / 10:00 (сменщики)</span>
+            <span class="px-2.5 py-1 rounded-lg bg-amber-600 text-white shadow-sm flex items-center gap-1">
+                <span>🏖</span><span>Отпуск</span>
+            </span>
+            <span class="px-2.5 py-1 rounded-lg bg-orange-600 text-white shadow-sm flex items-center gap-1">
+                <span>💊</span><span>Больничный</span>
+            </span>
+        </div>
+    </div>
+
+    <!-- ПАНЕЛЬ ФИЛЬТРОВ -->
+    <div class="mb-5 p-3.5 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 flex flex-wrap items-center gap-3 relative z-30">
+        <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+            <span>🔍 Фильтры календаря:</span>
+        </div>
+
+        <div class="relative">
+            <input type="hidden" id="valEmployee" value="all">
+            <button type="button" onclick="toggleDropdown('empDropdown')" 
+                    class="bg-white/80 dark:bg-[#1c1c22]/90 hover:bg-white dark:hover:bg-[#25252b] border border-black/10 dark:border-white/15 rounded-xl px-3.5 py-2 text-xs text-gray-800 dark:text-gray-100 flex items-center gap-3 transition shadow-sm cursor-pointer select-none">
+                <span id="labelEmployee" class="font-medium">Все сотрудники</span>
+                <span class="text-gray-400 text-[10px]">▼</span>
+            </button>
+            
+            <div id="empDropdown" class="hidden absolute left-0 mt-2 w-64 max-h-60 ios-inner-scroll ios-dropdown-menu rounded-2xl p-1.5 z-50 animate-dropdown">
+                <div onclick="selectEmployee('all', 'Все сотрудники')" class="px-3 py-2 text-xs rounded-xl hover:bg-corp-red hover:text-white cursor-pointer transition font-medium">Все сотрудники</div>
+                <div onclick="selectEmployee('no_managers', '👥 Все сотрудники без руководителей')" class="px-3 py-2 text-xs rounded-xl hover:bg-corp-red hover:text-white cursor-pointer transition font-bold text-rose-600 dark:text-rose-400 border-b border-black/5 dark:border-white/5 mb-1">👥 Все сотрудники без руководителей</div>
+                {% for emp in all_employees %}
+                <div onclick="selectEmployee('{{ emp }}', '{{ emp }}')" class="px-3 py-2 text-xs rounded-xl hover:bg-corp-red hover:text-white cursor-pointer transition font-medium">{{ emp }}</div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="relative">
+            <input type="hidden" id="valCategory" value="all">
+            <button type="button" onclick="toggleDropdown('catDropdown')" 
+                    class="bg-white/80 dark:bg-[#1c1c22]/90 hover:bg-white dark:hover:bg-[#25252b] border border-black/10 dark:border-white/15 rounded-xl px-3.5 py-2 text-xs text-gray-800 dark:text-gray-100 flex items-center gap-3 transition shadow-sm cursor-pointer select-none">
+                <span id="labelCategory" class="font-medium">Все события</span>
+                <span class="text-gray-400 text-[10px]">▼</span>
+            </button>
+            
+            <div id="catDropdown" class="hidden absolute left-0 mt-2 w-52 ios-inner-scroll ios-dropdown-menu rounded-2xl p-1.5 z-50 animate-dropdown">
+                <div onclick="selectCategory('all', 'Все события')" class="px-3 py-2 text-xs rounded-xl hover:bg-corp-red hover:text-white cursor-pointer transition font-medium">Все события</div>
+                <div onclick="selectCategory('07:00', '🔴 Смена 07:00')" class="px-3 py-2 text-xs rounded-xl hover:bg-corp-red hover:text-white cursor-pointer transition font-medium">🔴 Смена 07:00</div>
+                <div onclick="selectCategory('09:00', '🔘 Смена 09:00')" class="px-3 py-2 text-xs rounded-xl hover:bg-corp-red hover:text-white cursor-pointer transition font-medium">🔘 Смена 09:00</div>
+                <div onclick="selectCategory('12:00', '🔵 Смена 12:00')" class="px-3 py-2 text-xs rounded-xl hover:bg-corp-red hover:text-white cursor-pointer transition font-medium">🔵 Смена 12:00</div>
+                <div onclick="selectCategory('15:00', '🟣 Смена 15:00')" class="px-3 py-2 text-xs rounded-xl hover:bg-corp-red hover:text-white cursor-pointer transition font-medium">🟣 Смена 15:00</div>
+                <div onclick="selectCategory('reliever', '🍷 Сменщики')" class="px-3 py-2 text-xs rounded-xl hover:bg-corp-red hover:text-white cursor-pointer transition font-medium">🍷 Сменщики (08:00 / 10:00)</div>
+                <div onclick="selectCategory('vacation', '🏖 Отпуска')" class="px-3 py-2 text-xs rounded-xl hover:bg-corp-red hover:text-white cursor-pointer transition font-medium">🏖 Отпуска</div>
+                <div onclick="selectCategory('sick', '💊 Больничные')" class="px-3 py-2 text-xs rounded-xl hover:bg-corp-red hover:text-white cursor-pointer transition font-medium">💊 Больничные</div>
+            </div>
+        </div>
+
+        <button onclick="resetCalendarFilters()" 
+                class="ml-auto text-xs px-3 py-2 rounded-xl bg-black/5 hover:bg-black/10 dark:bg-white/10 dark:hover:bg-white/15 text-gray-700 dark:text-gray-200 font-medium transition active:scale-95">
+            ✕ Сбросить
+        </button>
+    </div>
+    
+    <div id='calendar'></div>
+</div>
+
+<!-- МОДАЛЬНОЕ ОКНО ДЕТАЛЕЙ ДНЯ -->
+<div id="dayModal" class="fixed inset-0 ios-modal-backdrop hidden items-center justify-center p-4 z-50 transition-all duration-300">
+    <div class="ios-glass-card rounded-[32px] max-w-md w-full flex flex-col max-h-[82vh] overflow-hidden animate-ios">
+        
+        <div class="px-6 pt-7 pb-3 flex justify-between items-start shrink-0 z-20">
+            <div>
+                <p class="text-[11px] font-bold tracking-wider uppercase text-gray-400 mb-0.5">Расписание на день</p>
+                <h3 id="modalTitle" class="text-2xl font-extrabold tracking-tight text-corp-red dark:text-red-400">График</h3>
+            </div>
+            <button onclick="closeDayModal()" class="w-8 h-8 rounded-full bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 flex items-center justify-center text-gray-600 dark:text-gray-300 transition active:scale-90 font-bold text-sm mt-0.5">
+                ✕
+            </button>
+        </div>
+        
+        <div class="px-6 py-2 ios-scroll-fade flex-grow space-y-4">
+            <div id="modalContent" class="space-y-4 pt-1 pb-4"></div>
+        </div>
+
+        <div class="px-6 pt-2 pb-6 shrink-0 text-center z-20">
+            <button onclick="closeDayModal()" class="w-full py-3 rounded-2xl bg-corp-red hover:bg-corp-dark text-white font-bold text-sm shadow-xl transition active:scale-95">
+                Готово
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    var globalCalendar = null;
+    const managerNames = {{ manager_names | default([]) | tojson }};
+
+    function toggleDropdown(id) {
+        const menu = document.getElementById(id);
+        const allMenus = document.querySelectorAll('.ios-dropdown-menu');
+        allMenus.forEach(m => {
+            if (m.id !== id) m.classList.add('hidden');
+        });
+        menu.classList.toggle('hidden');
+    }
+
+    window.addEventListener('click', function(e) {
+        if (!e.target.closest('.relative')) {
+            document.querySelectorAll('.ios-dropdown-menu').forEach(m => m.classList.add('hidden'));
+        }
+    });
+
+    function selectEmployee(val, label) {
+        document.getElementById('valEmployee').value = val;
+        document.getElementById('labelEmployee').innerText = label;
+        document.getElementById('empDropdown').classList.add('hidden');
+        applyCalendarFilters();
+    }
+
+    function selectCategory(val, label) {
+        document.getElementById('valCategory').value = val;
+        document.getElementById('labelCategory').innerText = label;
+        document.getElementById('catDropdown').classList.add('hidden');
+        applyCalendarFilters();
+    }
+
+    function closeDayModal() {
+        const modal = document.getElementById('dayModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+
+    document.getElementById('dayModal').addEventListener('click', function(e) {
+        if (e.target === this) closeDayModal();
+    });
+
+    function renderShiftBadge(shiftStr) {
+        if (!shiftStr) return '';
+        let s = shiftStr.trim();
+        
+        if (s.includes('07:00') || s === 'с 7') {
+            return `<span class="px-2.5 py-0.5 rounded-lg text-xs font-bold bg-red-500/15 text-red-600 dark:text-red-400 border border-red-500/25">07:00</span>`;
+        } else if (s.includes('09:00') || s === 'с 9') {
+            return `<span class="px-2.5 py-0.5 rounded-lg text-xs font-bold bg-slate-500/15 text-slate-700 dark:text-slate-300 border border-slate-500/25">09:00</span>`;
+        } else if (s.includes('12:00') || s === 'с 12') {
+            return `<span class="px-2.5 py-0.5 rounded-lg text-xs font-bold bg-sky-500/15 text-sky-600 dark:text-sky-400 border border-sky-500/25">12:00</span>`;
+        } else if (s.includes('15:00') || s === 'с 15') {
+            return `<span class="px-2.5 py-0.5 rounded-lg text-xs font-bold bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/25">15:00</span>`;
+        } else if (s.includes('08:00') || s === 'с 8') {
+            return `<span class="px-2.5 py-0.5 rounded-lg text-xs font-bold bg-rose-900/20 text-rose-700 dark:text-rose-400 border border-rose-900/30">08:00 (сменщик)</span>`;
+        } else if (s.includes('10:00') || s === 'с 10') {
+            return `<span class="px-2.5 py-0.5 rounded-lg text-xs font-bold bg-[#9b0d23]/20 text-[#c8102e] dark:text-rose-400 border border-[#9b0d23]/30">10:00 (сменщик)</span>`;
+        }
+        return `<span class="px-2.5 py-0.5 rounded-lg text-xs font-bold bg-gray-500/15 text-gray-700 dark:text-gray-300">${s}</span>`;
+    }
+
+    function openDayModal(dateStr) {
+        fetch(`/api/day-details?date_str=${dateStr}`)
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('modalTitle').innerText = data.date;
+                let html = '';
+
+                if (data.duties && data.duties.length > 0) {
+                    html += `<div>
+                                <span class="text-[11px] font-bold uppercase tracking-wider text-corp-red dark:text-red-400 ml-1">Дежурства (Регистрации)</span>
+                                <div class="space-y-2 mt-1.5">`;
+
+                    const timeSlots = [
+                        { id: 'morning', title: '🌅 Утро (07:00–09:00)' },
+                        { id: 'day', title: '☀️ День (09:00–18:00)' },
+                        { id: 'evening', title: '🌙 Вечер (18:00–23:59)' }
+                    ];
+
+                    timeSlots.forEach(slot => {
+                        let slotDuties = data.duties.filter(d => d.slot === slot.id);
+                        if (slotDuties.length > 0) {
+                            html += `<div class="ios-inner-group rounded-2xl p-3">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <span class="text-xs font-bold text-gray-800 dark:text-gray-200">${slot.title}</span>
+                                        </div>
+                                        <div class="space-y-1.5 divide-y divide-black/5 dark:divide-white/5">`;
+                            slotDuties.forEach(d => {
+                                html += `<div class="pt-1.5 first:pt-0 flex items-center justify-between text-xs">
+                                            <span class="font-medium text-gray-700 dark:text-gray-300">${d.fio}</span>
+                                            <span class="px-2 py-0.5 rounded-md font-bold text-[10px] bg-black/5 dark:bg-white/10 text-corp-red dark:text-red-400 uppercase tracking-wide border border-black/5 dark:border-white/10">${d.system}</span>
+                                         </div>`;
+                            });
+                            html += `</div></div>`;
+                        }
+                    });
+
+                    html += `</div></div>`;
+                }
+
+                let shifts = data.entries.filter(e => e.shift);
+                if (shifts.length > 0) {
+                    html += `<div>
+                                <span class="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 ml-1">Рабочие смены</span>
+                                <div class="ios-inner-group rounded-2xl p-2.5 mt-1.5 divide-y divide-black/5 dark:divide-white/5">`;
+                    shifts.forEach(s => {
+                        html += `<div class="flex justify-between items-center py-2 px-1 text-xs">
+                                    <span class="font-semibold text-gray-800 dark:text-gray-200">${s.fio}</span>
+                                    ${renderShiftBadge(s.shift)}
+                                 </div>`;
+                    });
+                    html += `</div></div>`;
+                }
+
+                let absences = data.entries.filter(e => e.vacation || e.sick);
+                if (absences.length > 0) {
+                    html += `<div>
+                                <span class="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 ml-1">Отсутствия</span>
+                                <div class="ios-inner-group rounded-2xl p-2.5 mt-1.5 divide-y divide-black/5 dark:divide-white/5">`;
+                    absences.forEach(a => {
+                        let label = a.vacation ? '🏖 Отпуск' : '💊 Больничный';
+                        let colorClass = a.vacation ? 'text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/20' : 'text-orange-600 dark:text-orange-400 bg-orange-500/10 border-orange-500/20';
+                        html += `<div class="flex justify-between items-center py-2 px-1 text-xs">
+                                    <span class="font-medium text-gray-700 dark:text-gray-300">${a.fio}</span>
+                                    <span class="px-2.5 py-0.5 rounded-lg font-bold text-xs border ${colorClass}">${label}</span>
+                                 </div>`;
+                    });
+                    html += `</div></div>`;
+                }
+
+                if (!html) {
+                    html = '<div class="text-center py-6 text-sm text-gray-400 italic">На эту дату нет назначений</div>';
+                }
+
+                document.getElementById('modalContent').innerHTML = html;
+                const modal = document.getElementById('dayModal');
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            });
+    }
+
+    function applyCalendarFilters() {
+        if (!globalCalendar) return;
+        const selectedEmp = document.getElementById('valEmployee').value;
+        const selectedCat = document.getElementById('valCategory').value;
+
+        const allEvents = globalCalendar.getEvents();
+        allEvents.forEach(evt => {
+            const props = evt.extendedProps || {};
+            if (props.is_divider) {
+                if (selectedEmp === 'all' && selectedCat === 'all') {
+                    evt.setProp('display', 'auto');
+                } else {
+                    evt.setProp('display', 'none');
+                }
+                return;
+            }
+
+            let matchEmp = true;
+            if (selectedEmp === 'no_managers') {
+                matchEmp = !managerNames.includes(props.full_name);
+            } else if (selectedEmp !== 'all') {
+                matchEmp = (props.full_name === selectedEmp);
+            }
+
+            const matchCat = (selectedCat === 'all') || (props.category === selectedCat);
+
+            if (matchEmp && matchCat) {
+                evt.setProp('display', 'auto');
+            } else {
+                evt.setProp('display', 'none');
+            }
+        });
+    }
+
+    function resetCalendarFilters() {
+        selectEmployee('all', 'Все сотрудники');
+        selectCategory('all', 'Все события');
+    }
+
+    // Бронебойный запуск календаря
+    function initMyCalendar() {
+        var calendarEl = document.getElementById('calendar');
+        if (!calendarEl || window.calendarIsReady) return;
+        if (typeof FullCalendar === 'undefined') {
+            setTimeout(initMyCalendar, 100);
+            return;
+        }
+        window.calendarIsReady = true;
+
+        globalCalendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            locale: 'ru',
+            height: 'auto',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: ''
+            },
+            eventOrder: 'order,title',
+            events: '/api/events',
+            eventDidMount: function(info) {
+                const selectedEmp = document.getElementById('valEmployee').value;
+                const selectedCat = document.getElementById('valCategory').value;
+                if (selectedEmp !== 'all' || selectedCat !== 'all') {
+                    const props = info.event.extendedProps || {};
+                    if (props.is_divider) {
+                        info.event.setProp('display', 'none');
+                        return;
+                    }
+                    let matchEmp = true;
+                    if (selectedEmp === 'no_managers') {
+                        matchEmp = !managerNames.includes(props.full_name);
+                    } else if (selectedEmp !== 'all') {
+                        matchEmp = (props.full_name === selectedEmp);
+                    }
+                    const matchCat = (selectedCat === 'all') || (props.category === selectedCat);
+                    if (!matchEmp || !matchCat) {
+                        info.event.setProp('display', 'none');
+                    }
+                }
+            },
+            eventClick: function(info) {
+                if (info.event.extendedProps.is_divider) return;
+                let dateStr = info.event.startStr.split('T')[0];
+                openDayModal(dateStr);
+            },
+            dateClick: function(info) {
+                openDayModal(info.dateStr);
+            }
+        });
+        globalCalendar.render();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initMyCalendar);
+    } else {
+        initMyCalendar();
+    }
+    window.addEventListener('load', initMyCalendar);
+    setTimeout(initMyCalendar, 150);
+</script>
+{% endblock %}
