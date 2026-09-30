@@ -118,42 +118,66 @@
         border-top: 1px dashed rgba(0, 0, 0, 0.15);
     }
 
-    .fc-theme-standard th, 
-    .fc-col-header-cell {
-        background: rgba(0, 0, 0, 0.03) !important;
-        border-color: rgba(0, 0, 0, 0.08) !important;
+    /* === ПРОЗРАЧНАЯ ШАПКА ПОД СТИЛЬ ВЕРХНЕГО МЕНЮ (GLASSMORPHISM) === */
+    .fc-scrollgrid {
+        border-collapse: separate !important;
+        border-radius: 16px !important;
+        overflow: hidden !important;
+        border: 1px solid rgba(0, 0, 0, 0.08) !important;
     }
+    .dark .fc-scrollgrid {
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    }
+    
+    .fc-scrollgrid-section-header th {
+        /* Светлая тема: полупрозрачный фирменный красный + размытие */
+        background: rgba(200, 16, 46, 0.9) !important;
+        backdrop-filter: blur(12px) saturate(150%) !important;
+        -webkit-backdrop-filter: blur(12px) saturate(150%) !important;
+        box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.3) !important;
+        border-top: none !important;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.15) !important;
+        border-right: 1px solid rgba(255, 255, 255, 0.2) !important;
+        border-left: none !important;
+    }
+    
+    .dark .fc-scrollgrid-section-header th {
+        /* Темная тема: полупрозрачный глубокий винный оттенок + размытие */
+        background: rgba(122, 10, 28, 0.9) !important;
+        backdrop-filter: blur(12px) saturate(150%) !important;
+        -webkit-backdrop-filter: blur(12px) saturate(150%) !important;
+        box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.12) !important;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.4) !important;
+        border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
+    }
+    
+    .fc-theme-standard th:last-child,
+    .dark .fc-theme-standard th:last-child {
+        border-right: none !important;
+    }
+    
     .fc-col-header-cell-cushion {
-        color: #64748b !important;
-        font-weight: 700 !important;
+        color: #ffffff !important;
+        font-weight: 800 !important;
         text-transform: uppercase !important;
         font-size: 0.75rem !important;
-        padding: 8px 4px !important;
+        letter-spacing: 0.05em !important;
+        padding: 12px 4px !important;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+    }
+    .dark .fc-col-header-cell-cushion {
+        text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6) !important;
     }
 
     .dark .fc,
     .dark .fc table,
     .dark .fc td,
     .dark .fc th,
-    .dark .fc-theme-standard td,
-    .dark .fc-theme-standard th,
-    .dark .fc-scrollgrid,
-    .dark .fc-scrollgrid-section,
-    .dark .fc-scrollgrid-section table,
     .dark .fc-daygrid-day,
     .dark .fc-daygrid-day-frame {
         background-color: transparent;
         border-color: rgba(255, 255, 255, 0.07) !important;
-        box-shadow: none !important;
         outline: none !important;
-    }
-    .dark .fc-col-header,
-    .dark .fc-col-header-cell {
-        background: rgba(30, 30, 36, 0.85) !important;
-        border-color: rgba(255, 255, 255, 0.08) !important;
-    }
-    .dark .fc-col-header-cell-cushion {
-        color: #94a3b8 !important;
     }
 
     .fc-daygrid-day-top {
@@ -266,39 +290,31 @@
     .ios-scroll-fade::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.22); border-radius: 9999px; }
     .dark .ios-scroll-fade::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.22); }
 
-
     /* === ИЗЯЩНЫЙ БЛИК (УКОРОЧЕННЫЙ ПСЕВДОЭЛЕМЕНТ) ДЛЯ ОБЕИХ ТЕМ === */
-    
-    /* Применяем только к карточкам .ios-glass, чтобы не сломать левую обводку у главного заголовка */
     .ios-glass.border-l-4 {
         border-left-width: 1px !important;
-        border-left-color: rgba(255, 255, 255, 0.9) !important; /* Фоновая граница светлой темы */
+        border-left-color: rgba(255, 255, 255, 0.9) !important;
         position: relative;
     }
     .dark .ios-glass.border-l-4 {
-        border-left-color: rgba(255, 255, 255, 0.1) !important; /* Фоновая граница тёмной темы */
+        border-left-color: rgba(255, 255, 255, 0.1) !important;
     }
-
     .ios-glass.border-l-4::before {
         content: "";
         position: absolute;
         top: 25%;
         bottom: 25%;
-        left: -1px; /* Накладывается точно поверх левой границы карточки */
+        left: -1px;
         width: 4px;
         border-radius: 0 4px 4px 0;
         opacity: 0.95;
         z-index: 10;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
-
-    /* Анимация при наведении: блик плавно вытягивается */
     .ios-glass.border-l-4:hover::before {
         top: 15%;
         bottom: 15%;
     }
-
-    /* Цвета бликов и мягкое свечение (светлая тема) */
     .border-l-corp-red::before { background: #c8102e; box-shadow: 2px 0 8px rgba(200, 16, 46, 0.3); }
     .border-l-red-500::before { background: #ef4444; box-shadow: 2px 0 8px rgba(239, 68, 68, 0.3); }
     .border-l-sky-500::before { background: #0ea5e9; box-shadow: 2px 0 8px rgba(14, 165, 233, 0.3); }
@@ -308,7 +324,6 @@
     .border-l-orange-500::before { background: #f97316; box-shadow: 2px 0 8px rgba(249, 115, 22, 0.3); }
     .border-l-indigo-500::before { background: #6366f1; box-shadow: 2px 0 8px rgba(99, 102, 241, 0.3); }
 
-    /* Цвета бликов и насыщенное свечение (темная тема) */
     .dark .border-l-corp-red::before { box-shadow: 2px 0 10px rgba(200, 16, 46, 0.7); }
     .dark .border-l-red-500::before { box-shadow: 2px 0 10px rgba(239, 68, 68, 0.7); }
     .dark .border-l-sky-500::before { box-shadow: 2px 0 10px rgba(14, 165, 233, 0.7); }
@@ -717,7 +732,11 @@
         allEvents.forEach(evt => {
             const props = evt.extendedProps || {};
             if (props.is_divider) {
-                evt.setProp('display', (selectedEmp === 'all' && selectedCat === 'all') ? 'auto' : 'none');
+                if (selectedEmp === 'all' && selectedCat === 'all') {
+                    evt.setProp('display', 'auto');
+                } else {
+                    evt.setProp('display', 'none');
+                }
                 return;
             }
 
